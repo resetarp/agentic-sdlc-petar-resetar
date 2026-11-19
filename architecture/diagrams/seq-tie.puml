@@ -1,0 +1,36 @@
+@startuml seq-tie
+title Runtime: Tie\n(Black: 2H 3D 5S 9C KD  White: 2D 3H 5C 9S KH)
+
+participant "stdin" as stdin
+participant "cli" as cli
+participant "parser" as parser
+participant "ranker" as ranker
+participant "comparator" as comparator
+participant "formatter" as formatter
+participant "stdout" as stdout
+
+stdin -> cli : line = "Black: 2H 3D 5S 9C KD  White: 2D 3H 5C 9S KH"
+
+cli -> parser : parse_line(line)
+parser --> cli : (black_hand, white_hand)
+
+cli -> ranker : rank_hand(black_hand)
+ranker -> ranker : detect High Card
+ranker -> ranker : build tiebreaker key (13, 9, 5, 3, 2)
+ranker --> cli : RankedHand(HIGH_CARD, (13, 9, 5, 3, 2), black_hand)
+
+cli -> ranker : rank_hand(white_hand)
+ranker -> ranker : detect High Card
+ranker -> ranker : build tiebreaker key (13, 9, 5, 3, 2)
+ranker --> cli : RankedHand(HIGH_CARD, (13, 9, 5, 3, 2), white_hand)
+
+cli -> comparator : compare(black_ranked, white_ranked)
+comparator -> comparator : HIGH_CARD == HIGH_CARD\ntiebreaker (13,9,5,3,2) == (13,9,5,3,2) → Tie
+comparator --> cli : Result(tie=True)
+
+cli -> formatter : format_result(result)
+formatter --> cli : "Tie."
+
+cli -> stdout : "Tie."
+
+@enduml

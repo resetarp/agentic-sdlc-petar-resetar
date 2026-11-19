@@ -1,0 +1,20 @@
+@startuml c4-container
+!pragma layout smetana
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Poker Hands - Container Diagram
+
+LAYOUT_WITH_LEGEND()
+
+Person(player, "Player", "Submits two 5-card hands and reads the result.")
+System_Ext(testHarness, "Acceptance Test Suite", "Automated BDD/TDD tests that feed example hands to the system and check the reported results.")
+
+System_Boundary(pokerHands, "Poker Hands") {
+    Container(cli, "Poker Hands CLI", "Python 3.12", "Single executable process: reads stdin, runs the parse-rank-compare-format pipeline, writes stdout.")
+}
+
+Rel(player, cli, "Submits two hands", "stdin (plain text)")
+Rel(cli, player, "Reports winner or tie", "stdout (plain text)")
+Rel(testHarness, cli, "Runs example games and checks results", "CLI subprocess / direct function calls")
+
+@enduml
