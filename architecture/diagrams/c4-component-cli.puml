@@ -1,0 +1,38 @@
+@startuml c4-component-cli
+!pragma layout smetana
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Poker Hands - CLI Container - Component Diagram
+
+LAYOUT_WITH_LEGEND()
+
+Person(player, "Player", "Submits two 5-card hands and reads the result.")
+System_Ext(testHarness, "Acceptance Test Suite", "Drives the system with example hands and checks results.")
+
+Container_Boundary(cli, "Poker Hands CLI") {
+    Component(cliEntry, "cli", "Python module", "Entry point. Reads stdin line by line, orchestrates the pipeline, writes stdout.")
+    Component(parser, "parser", "Python module", "Parses a raw input line into two Hand instances. Raises ValueError on malformed input.")
+    Component(ranker, "ranker", "Python module", "Classifies a Hand into a HandCategory (IntEnum 1-9) plus a tiebreaker key tuple. Contains all poker rules.")
+    Component(comparator, "comparator", "Python module", "Compares two RankedHand values by tuple comparison and returns a Result (winner name or tie).")
+    Component(formatter, "formatter", "Python module", "Converts a Result into the kata output string.")
+    Component(hand, "hand", "Python module", "Hand value object: player name + exactly 5 Cards.")
+    Component(card, "card", "Python module", "Card value object. Rank and Suit as IntEnum.")
+}
+
+Rel(player, cliEntry, "Submits two hands", "stdin")
+Rel(cliEntry, player, "Reports winner or tie", "stdout")
+Rel(testHarness, cliEntry, "Exercises all scenarios", "subprocess / function call")
+
+Rel(cliEntry, parser, "Calls parse_line()")
+Rel(cliEntry, ranker, "Calls rank_hand()")
+Rel(cliEntry, comparator, "Calls compare()")
+Rel(cliEntry, formatter, "Calls format_result()")
+
+Rel(parser, hand, "Constructs Hand instances")
+Rel(parser, card, "Constructs Card instances")
+Rel(ranker, hand, "Reads Hand and Card values")
+Rel(comparator, ranker, "Uses RankedHand and HandCategory types")
+Rel(formatter, comparator, "Uses Result type")
+Rel(hand, card, "Contains Card instances")
+
+@enduml

@@ -1,0 +1,19 @@
+@startuml c4-context
+!pragma layout smetana
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title System Context diagram for Poker Hands
+
+LAYOUT_WITH_LEGEND()
+
+Person(player, "Player", "Someone who wants to know which of two poker hands wins.")
+
+System(pokerHands, "Poker Hands", "Parses two 5-card poker hands, works out each hand's rank (e.g. flush, straight), compares them with tie-breaking rules and reports the winner.")
+
+System_Ext(testHarness, "Acceptance Test Suite", "Automated BDD/TDD tests that feed example hands to the system and check the reported results.")
+
+Rel(player, pokerHands, "Submits two hands, e.g. 'Black: 2H 3D 5S 9C KD  White: 2C 3H 4S 8C AH'", "CLI / stdin")
+Rel(pokerHands, player, "Reports the result, e.g. 'White wins. - with high card: Ace' or 'Tie.'", "stdout")
+Rel(testHarness, pokerHands, "Runs example games and checks the results", "CLI / function calls")
+
+@enduml
