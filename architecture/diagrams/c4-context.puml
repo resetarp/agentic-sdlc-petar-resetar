@@ -1,5 +1,6 @@
 @startuml c4-context
-!include <C4/C4_Context>
+!pragma layout smetana
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
 title System Context diagram for Poker Hands
 
