@@ -1,0 +1,26 @@
+@startuml deployment
+!pragma layout smetana
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Deployment.puml
+
+title Poker Hands - Deployment Diagram
+
+LAYOUT_WITH_LEGEND()
+
+Deployment_Node(devMachine, "Developer Workstation", "Linux / macOS / Windows + WSL") {
+    Deployment_Node(venv, "Python 3.12 Virtual Environment", ".venv") {
+        Container(cli, "Poker Hands CLI", "Python 3.12", "Runs as a local process: reads stdin, writes stdout.")
+        Container(testSuite, "Test Suite", "pytest + pytest-bdd", "Executes Gherkin scenarios and unit tests against the CLI components.")
+    }
+}
+
+Deployment_Node(ciRunner, "CI Runner", "GitHub Actions / Ubuntu latest") {
+    Deployment_Node(ciVenv, "Python 3.12 Virtual Environment", ".venv") {
+        Container(ciCli, "Poker Hands CLI", "Python 3.12", "Installed from source; exercised by the test suite.")
+        Container(ciTests, "Test Suite", "pytest + pytest-bdd", "Runs ruff, black, isort, then pytest on every push.")
+    }
+}
+
+Rel(testSuite, cli, "Invokes via subprocess or direct function call")
+Rel(ciTests, ciCli, "Invokes via subprocess or direct function call")
+
+@enduml

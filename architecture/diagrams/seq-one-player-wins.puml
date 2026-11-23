@@ -1,0 +1,39 @@
+@startuml seq-one-player-wins
+title Runtime: One Player Wins\n(Black: 2H 4S 4C 2D 4H  White: 2S 8S AS QS 3S)
+
+participant "stdin" as stdin
+participant "cli" as cli
+participant "parser" as parser
+participant "ranker" as ranker
+participant "comparator" as comparator
+participant "formatter" as formatter
+participant "stdout" as stdout
+
+stdin -> cli : line = "Black: 2H 4S 4C 2D 4H  White: 2S 8S AS QS 3S"
+
+cli -> parser : parse_line(line)
+parser -> parser : tokenise into two hand strings
+parser -> parser : build Card instances for each token
+parser -> parser : build Hand("Black", cards) and Hand("White", cards)
+parser --> cli : (black_hand, white_hand)
+
+cli -> ranker : rank_hand(black_hand)
+ranker -> ranker : detect Full House (three 4s + pair of 2s)
+ranker -> ranker : build tiebreaker key (4, 2)
+ranker --> cli : RankedHand(FULL_HOUSE, (4, 2), black_hand)
+
+cli -> ranker : rank_hand(white_hand)
+ranker -> ranker : detect Flush (all Spades)
+ranker -> ranker : build tiebreaker key (14, 12, 8, 3, 2)
+ranker --> cli : RankedHand(FLUSH, (14, 12, 8, 3, 2), white_hand)
+
+cli -> comparator : compare(black_ranked, white_ranked)
+comparator -> comparator : FULL_HOUSE (6) > FLUSH (5) → Black wins
+comparator --> cli : Result(winner="Black", category=FULL_HOUSE, reason="4 over 2")
+
+cli -> formatter : format_result(result)
+formatter --> cli : "Black wins. - with full house: 4 over 2"
+
+cli -> stdout : "Black wins. - with full house: 4 over 2"
+
+@enduml
