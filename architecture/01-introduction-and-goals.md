@@ -25,7 +25,7 @@ building production infrastructure.
 | ID   | Requirement |
 |------|-------------|
 | FR-1 | Parse a line of input containing two named 5-card hands in the format `<Name>: C1 C2 C3 C4 C5`. |
-| FR-2 | Recognise all nine hand categories, ranked lowest to highest: High Card, Pair, Two Pairs, Three of a Kind, Straight, Flush, Full House, Four of a Kind, Straight Flush, Royal Flush. A Royal Flush is a Straight Flush topped by an Ace (10-J-Q-K-A of the same suit) and ranks above all other hands. |
+| FR-2 | Recognise all ten hand categories, ranked lowest to highest: High Card, Pair, Two Pairs, Three of a Kind, Straight, Flush, Full House, Four of a Kind, Straight Flush, Royal Flush. A Royal Flush is a Straight Flush topped by an Ace (10-J-Q-K-A of the same suit) and ranks above all other hands. An Ace-low straight (A-2-3-4-5, also called a wheel) is a valid straight and ranks as the lowest possible straight. |
 | FR-3 | Compare two hands and determine the winner, applying tie-breaking rules within the same category (kicker cards, highest pair, etc.). |
 | FR-4 | Report the result in natural language: `<Name> wins. - with <category>: <reason>` or `Tie.` |
 | FR-5 | Accept input from stdin (interactive or piped) and write output to stdout. |

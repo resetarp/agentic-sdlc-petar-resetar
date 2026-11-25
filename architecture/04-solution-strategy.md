@@ -72,8 +72,11 @@ The system is decomposed into five modules that form a linear pipeline:
 
 `Card` and `Hand` are immutable `dataclasses`. `Rank` (2–A) and `Suit` (C/D/H/S)
 are `IntEnum`, so rank comparison is a plain `>` / `<`. `HandCategory` is also
-`IntEnum`, ordered from `HIGH_CARD = 1` to `ROYAL_FLUSH = 9`, so category
-comparison is likewise a plain `>` / `<`.
+`IntEnum`, so category comparison is likewise a plain `>` / `<`.
+
+`HandCategory` runs from `HIGH_CARD = 1` to `ROYAL_FLUSH = 10`, one integer per
+category in rank order: High Card, Pair, Two Pairs, Three of a Kind, Straight,
+Flush, Full House, Four of a Kind, Straight Flush, Royal Flush.
 
 ### Tiebreaker key
 
@@ -91,10 +94,17 @@ For example:
 
 ### Royal Flush as a distinct category
 
-A Royal Flush (10-J-Q-K-A of the same suit) is classified as `ROYAL_FLUSH = 9`,
-one step above `STRAIGHT_FLUSH = 8`. Because it is always the highest possible
+A Royal Flush (10-J-Q-K-A of the same suit) is classified as `ROYAL_FLUSH = 10`,
+one step above `STRAIGHT_FLUSH = 9`. Because it is always the highest possible
 hand, its tiebreaker key is the empty tuple `()` — two Royal Flushes are always
 a tie.
+
+### Ace-low straight
+
+An Ace may act as a low card (value 1) to form the straight A-2-3-4-5. This is
+the lowest-ranked straight and its tiebreaker key treats the Ace as rank 1, not
+14, so it sorts below 2-3-4-5-6. The ranker must check for this case explicitly
+when detecting straights, because `Rank.ACE = 14` in the standard ordering.
 
 ### Pipeline, not layers
 
@@ -106,7 +116,7 @@ This keeps the dependency graph acyclic and each module independently testable.
 
 | Level | Tool | What it covers |
 |-------|------|----------------|
-| Acceptance | pytest-bdd (Gherkin) | All nine hand categories, all tie-breaking rules, the kata's sample cases |
+| Acceptance | pytest-bdd (Gherkin) | All ten hand categories, all tie-breaking rules, the kata's sample cases, and Ace-low straight |
 | Unit | pytest | Each module in isolation: `parser`, `ranker`, `comparator`, `formatter` |
 | Integration | pytest | Full pipeline from raw string to output string |
 

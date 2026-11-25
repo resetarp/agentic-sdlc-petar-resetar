@@ -8,7 +8,7 @@ measurable with concrete scenarios.
 ```
 Quality
 ├── Correctness (highest priority)
-│   ├── All nine hand categories classified correctly
+│   ├── All ten hand categories classified correctly
 │   ├── All tie-breaking rules applied correctly
 │   └── All kata sample cases produce the expected output
 ├── Testability
@@ -28,7 +28,7 @@ Quality
 |------|-------------------|----------|----------|----------------------|
 | QS-1 | Correctness | The four kata sample inputs are fed to the program. | The program produces the four expected output lines verbatim. | `pytest` suite green; all four sample cases pass as BDD scenarios. |
 | QS-2 | Correctness | A hand containing `TH JH QH KH AH` is submitted. | The program reports `royal flush`, not `straight flush`. | Dedicated BDD scenario passes. |
-| QS-3 | Correctness | Two hands in the same category with identical tiebreaker cards are submitted. | The program outputs `Tie.` | BDD scenario for each of the nine categories passes. |
+| QS-3 | Correctness | Two hands in the same category with identical tiebreaker cards are submitted. | The program outputs `Tie.` | BDD scenario for each of the ten categories passes. |
 | QS-4 | Correctness | Two hands where the winner is decided by a kicker (not the primary rank) are submitted. | The correct winner is reported. | BDD scenarios for Pair, Two Pairs, and High Card kicker cases all pass. |
 | QS-5 | Testability | A developer adds a new BDD scenario for an untested edge case. | The scenario can be wired to existing step definitions or new ones without touching production code outside `ranker`. | New scenario is runnable with `pytest` in under 5 seconds. |
 | QS-6 | Testability | `ranker` is unit-tested without invoking `parser` or `cli`. | Tests construct `Hand` objects directly and call `rank_hand()`. | All `ranker` unit tests pass with no I/O or subprocess calls. |

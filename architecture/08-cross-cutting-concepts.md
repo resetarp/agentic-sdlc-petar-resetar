@@ -14,7 +14,7 @@ The shared vocabulary and type system used by every module:
 | `Suit` | `IntEnum` | One of `CLUBS`, `DIAMONDS`, `HEARTS`, `SPADES`. Integer ordering is arbitrary; suits are only compared for equality (flush detection). |
 | `Card` | frozen `dataclass` | A `(Rank, Suit)` pair. Immutable; hashable. |
 | `Hand` | frozen `dataclass` | A player name and a `tuple[Card, ...]` of exactly 5 cards. |
-| `HandCategory` | `IntEnum` (1–9) | Ordered hand categories: `HIGH_CARD = 1` … `ROYAL_FLUSH = 9`. |
+| `HandCategory` | `IntEnum` (1–10) | Ten hand categories in rank order: `HIGH_CARD = 1`, `PAIR = 2`, `TWO_PAIRS = 3`, `THREE_OF_A_KIND = 4`, `STRAIGHT = 5`, `FLUSH = 6`, `FULL_HOUSE = 7`, `FOUR_OF_A_KIND = 8`, `STRAIGHT_FLUSH = 9`, `ROYAL_FLUSH = 10`. |
 | `RankedHand` | frozen `dataclass` | A `Hand` annotated with its `HandCategory` and a tiebreaker key `tuple[int, ...]`. |
 | `Result` | frozen `dataclass` | Holds the winner's name and the winning `HandCategory` with reason, or a tie flag. |
 
