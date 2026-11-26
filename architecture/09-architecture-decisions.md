@@ -44,7 +44,7 @@ in one direction only; no cycles are permitted.
 - Each stage has a single, clear responsibility and can be unit-tested in isolation.
 - A linear dependency graph makes the system easy to follow top-to-bottom.
 - Alternatives considered:
-  - *Single-module script*: simple to start but conflates I/O, rules, and formatting — hard to test individual rules.
+  - *Single-module script*: simple to start but conflates I/O, rules, and formatting - hard to test individual rules.
   - *Class hierarchy per hand category*: adds polymorphism overhead that is not justified for a kata of this size.
 
 **Consequences:**
@@ -71,7 +71,7 @@ comparison resolves all ties without special-case branching.
 **Rationale:**
 - `IntEnum` makes `HandCategory.FULL_HOUSE > HandCategory.FLUSH` a plain `>`
   with no helper function needed.
-- Tiebreaker tuples delegate all comparison logic to Python's tuple ordering —
+- Tiebreaker tuples delegate all comparison logic to Python's tuple ordering -
   the comparator needs no poker knowledge.
 - Alternatives considered:
   - *Plain integers with constants*: loses type safety and IDE support.
@@ -121,7 +121,8 @@ Royal Flushes are always equal.
 **Status:** Accepted
 
 **Context:**
-Invalid input (wrong card count, unknown token, duplicate card) must be caught
+Invalid input (wrong card count, unknown token, duplicate card within a hand or
+across both hands) must be caught
 and reported clearly. The question is where validation lives.
 
 **Decision:**

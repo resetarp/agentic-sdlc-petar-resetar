@@ -89,6 +89,16 @@ GAME-STORY-001 (S1, S2, S3). Sample 2
 (`Black: 2H 4S 4C 2D 4H  White: 2S 8S AS QS 3S` -> `Black wins. - with full house: 4 over 2`)
 is a Full House, so GAME-STORY-003 must include it as an acceptance scenario.
 
+**Duplicate cards (INPUT-STORY-001):** Ch 8.2 and 8.3 rule 4 reject a card
+that appears twice anywhere on the input line, within one hand or across both
+hands (single 52-card deck). INPUT-STORY-001 must include an acceptance
+scenario for each case, for example:
+- within a hand: `Black: 2H 4S 4C 3D 4S  White: 2C 3H 4H 8C AH` (4S twice in Black's hand)
+- across hands: `Black: 2H 3D 5S 9C KD  White: 2C 3H 4S 8C KD` (KD in both hands)
+
+Both must print an `Error:` line naming the duplicate card, and processing
+must continue with the next line (Ch 8.2).
+
 ---
 
 ## Decided questions (not open)

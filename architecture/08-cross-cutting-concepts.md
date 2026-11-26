@@ -30,7 +30,7 @@ The system has one meaningful error path: invalid input from the user.
 |-----------|---------------|-----------|
 | Wrong number of cards in a hand | `parser` | Raises `ValueError` with a message naming the player and the actual count. |
 | Unrecognised rank or suit token | `parser` | Raises `ValueError` naming the bad token. |
-| Duplicate cards within a hand | `parser` | Raises `ValueError` naming the duplicate. |
+| Duplicate card, within one hand or shared by both hands | `parser` | Raises `ValueError` naming the duplicate card (and, when it is in both hands, both players). |
 | Any other unexpected exception | `cli` | Caught by the top-level handler; prints `Error: <message>` to stdout and continues to the next line. |
 
 Rules:
@@ -48,7 +48,7 @@ component re-validates:
 1. The input line matches the pattern `<Name>: C1 C2 C3 C4 C5  <Name>: C1 C2 C3 C4 C5`.
 2. Each token is a valid `(Rank, Suit)` pair from the kata's notation.
 3. Each hand contains exactly 5 cards.
-4. No card appears twice in the same hand.
+4. No card appears twice in the input line, whether within one hand or across both hands. Both hands are dealt from a single 52-card deck.
 
 After `parser` returns two `Hand` instances, all subsequent components can
 treat their input as valid without defensive checks.
@@ -86,6 +86,6 @@ Enforced automatically in CI on every commit:
 
 | Tool | Purpose | Configuration |
 |------|---------|---------------|
-| `ruff` | Linting (style, bugs, complexity) | `pyproject.toml` — rules E, F, W, I, N, UP, B, SIM |
-| `black` | Formatting | `pyproject.toml` — line length 88, target Python 3.12 |
-| `isort` | Import ordering | `pyproject.toml` — black-compatible profile |
+| `ruff` | Linting (style, bugs, complexity) | `pyproject.toml` - rules E, F, W, I, N, UP, B, SIM |
+| `black` | Formatting | `pyproject.toml` - line length 88, target Python 3.12 |
+| `isort` | Import ordering | `pyproject.toml` - black-compatible profile |

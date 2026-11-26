@@ -1,6 +1,6 @@
 # 5. Building Block View
 
-## 5.1 Level 1 — Container Diagram
+## 5.1 Level 1 - Container Diagram
 
 Because the system is a single CLI process there is exactly one container.
 The diagram below makes that explicit and shows how the two external actors
@@ -10,7 +10,7 @@ interact with it.
 
 PlantUML source: [diagrams/c4-container.puml](diagrams/c4-container.puml)
 
-## 5.2 Level 2 — Component Diagram (CLI Container)
+## 5.2 Level 2 - Component Diagram (CLI Container)
 
 The single container is decomposed into seven components that form the
 parse → rank → compare → format pipeline described in Chapter 4.
@@ -21,7 +21,7 @@ PlantUML source: [diagrams/c4-component-cli.puml](diagrams/c4-component-cli.puml
 
 ## 5.3 Component Descriptions
 
-### `card` — Domain value objects (Card, Rank, Suit)
+### `card` - Domain value objects (Card, Rank, Suit)
 
 | Attribute | Detail |
 |-----------|--------|
@@ -30,7 +30,7 @@ PlantUML source: [diagrams/c4-component-cli.puml](diagrams/c4-component-cli.puml
 | Dependencies | None |
 | Key design rule | `Rank` is `IntEnum` so `Rank.ACE > Rank.KING` is a plain `>` comparison. |
 
-### `hand` — Domain value object (Hand)
+### `hand` - Domain value object (Hand)
 
 | Attribute | Detail |
 |-----------|--------|
@@ -39,16 +39,16 @@ PlantUML source: [diagrams/c4-component-cli.puml](diagrams/c4-component-cli.puml
 | Dependencies | `card` |
 | Key design rule | Construction validates that exactly 5 cards are present; raises `ValueError` otherwise. |
 
-### `parser` — Input parsing
+### `parser` - Input parsing
 
 | Attribute | Detail |
 |-----------|--------|
 | Responsibility | Parses a raw input line into two `Hand` instances. |
 | Public interface | `parse_line(line: str) -> tuple[Hand, Hand]` |
 | Dependencies | `card`, `hand` |
-| Key design rule | Raises `ValueError` with a descriptive message on any malformed input (wrong card count, unknown rank/suit token). |
+| Key design rule | Raises `ValueError` with a descriptive message on any malformed input (wrong card count, unknown rank/suit token, a card appearing twice within a hand or across both hands). |
 
-### `ranker` — Hand classification
+### `ranker` - Hand classification
 
 | Attribute | Detail |
 |-----------|--------|
@@ -57,7 +57,7 @@ PlantUML source: [diagrams/c4-component-cli.puml](diagrams/c4-component-cli.puml
 | Dependencies | `card`, `hand` |
 | Key design rule | Contains all poker rules. The tiebreaker key is constructed so that Python tuple comparison (`>`, `<`) resolves all ties without any special-case branching in the comparator. `ROYAL_FLUSH` is category 10 with an empty tiebreaker `()`. |
 
-### `comparator` — Winner determination
+### `comparator` - Winner determination
 
 | Attribute | Detail |
 |-----------|--------|
@@ -66,7 +66,7 @@ PlantUML source: [diagrams/c4-component-cli.puml](diagrams/c4-component-cli.puml
 | Dependencies | `ranker` (for `RankedHand`, `HandCategory`) |
 | Key design rule | Comparison is a single tuple comparison `(category, tiebreaker_key)`. No poker rules live here. |
 
-### `formatter` — Output formatting
+### `formatter` - Output formatting
 
 | Attribute | Detail |
 |-----------|--------|
@@ -75,7 +75,7 @@ PlantUML source: [diagrams/c4-component-cli.puml](diagrams/c4-component-cli.puml
 | Dependencies | `comparator` (for `Result`) |
 | Output examples | `White wins. - with high card: Ace` / `Black wins. - with full house: 4 over 2` / `Tie.` |
 
-### `cli` — Entry point
+### `cli` - Entry point
 
 | Attribute | Detail |
 |-----------|--------|
