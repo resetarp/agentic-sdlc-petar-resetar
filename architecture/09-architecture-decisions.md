@@ -63,9 +63,10 @@ categories (e.g. Full House beats Flush) and between card ranks (e.g. Ace beats
 King). These comparisons must be correct, readable, and free of magic numbers.
 
 **Decision:**
-Represent `HandCategory` (1–9) and `Rank` (2–14) as `IntEnum`. Tiebreakers are
-expressed as tuples of integers so that Python's built-in tuple comparison
-resolves all ties without special-case branching.
+Represent `HandCategory` and `Rank` (2–14) as `IntEnum`. `HandCategory` assigns
+one integer per category in rank order: `HIGH_CARD = 1` through `ROYAL_FLUSH = 10`.
+Tiebreakers are expressed as tuples of integers so that Python's built-in tuple
+comparison resolves all ties without special-case branching.
 
 **Rationale:**
 - `IntEnum` makes `HandCategory.FULL_HOUSE > HandCategory.FLUSH` a plain `>`
@@ -78,9 +79,9 @@ resolves all ties without special-case branching.
   - *Custom `__lt__` on a dataclass*: more code, same result.
 
 **Consequences:**
-- `HandCategory` values must be assigned in strict rank order and never changed
+- `HandCategory` values run 1–10 in strict rank order and must never change
   once agreed (changing an integer breaks comparisons silently).
-- `ROYAL_FLUSH = 9` with an empty tiebreaker `()` means two Royal Flushes are
+- `ROYAL_FLUSH = 10` with an empty tiebreaker `()` means two Royal Flushes are
   always a tie, which is correct.
 
 ---
@@ -90,13 +91,13 @@ resolves all ties without special-case branching.
 **Status:** Accepted
 
 **Context:**
-The standard kata on codingdojo.org lists eight hand categories, with Straight
+The standard kata on codingdojo.org lists nine hand categories, with Straight
 Flush as the highest. The project requirement (Chapter 1, FR-2) adds Royal Flush
-(10-J-Q-K-A of the same suit) as a ninth, distinct category ranked above all
-Straight Flushes.
+(10-J-Q-K-A of the same suit) as a tenth, distinct category ranked above all
+Straight Flushes, giving a clean `STRAIGHT_FLUSH = 9`, `ROYAL_FLUSH = 10`.
 
 **Decision:**
-Add `ROYAL_FLUSH = 9` to `HandCategory`. The ranker detects it before checking
+Add `ROYAL_FLUSH = 10` to `HandCategory`. The ranker detects it before checking
 for a Straight Flush. Its tiebreaker key is the empty tuple `()` because two
 Royal Flushes are always equal.
 
@@ -140,3 +141,40 @@ defensive checks.
 - `parser` must be comprehensive; any gap allows bad data to propagate silently.
 - Domain modules may use `assert` for internal invariants in debug mode, but
   must not rely on it for user-facing validation.
+
+---
+
+## ADR-006: Treat Ace-Low Straight (A-2-3-4-5) as the Lowest Straight
+
+**Status:** Accepted
+
+**Context:**
+`Rank.ACE = 14` in the standard ordering. Without special handling, A-2-3-4-5
+would not be detected as a straight (the gap between 14 and 2 is not 1), and
+even if detected some other way, the tiebreaker would rank it above 10-J-Q-K, which
+is wrong. The kata spec (Chapter 1, FR-2) requires this hand to be valid and to
+rank as the lowest straight.
+
+**Decision:**
+The ranker checks for the Ace-low straight explicitly: when the sorted ranks are
+`[2, 3, 4, 5, 14]`, the hand is classified as a Straight and the tiebreaker key
+treats the Ace as rank 1 (i.e. the key is `(5, 4, 3, 2, 1)`) so it sorts below
+all other straights.
+
+**Rationale:**
+- Explicit detection is safer than re-mapping `Rank.ACE` globally (changing its
+  integer value would break all rank comparisons elsewhere).
+- Using `1` in the tiebreaker key (not `Rank.ACE = 14`) correctly places the
+  wheel below 2-3-4-5-6.
+- Alternatives considered:
+  - *Add `Rank.LOW_ACE = 1`*: introduces a duplicate Ace concept and complicates
+    card construction and display.
+  - *Normalize rank list before straight detection*: same effect as the chosen
+    approach but less explicit about why the substitution happens.
+
+**Consequences:**
+- The ranker must handle `[2, 3, 4, 5, 14]` as a special case before the
+  general consecutive-ranks check.
+- The tiebreaker key for a wheel is `(5, 4, 3, 2, 1)`, not `(14, 5, 4, 3, 2)`.
+- Tests must include at least one Ace-low straight scenario and one that confirms
+  it loses to 2-3-4-5-6.

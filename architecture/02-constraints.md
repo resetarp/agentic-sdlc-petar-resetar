@@ -27,5 +27,5 @@
 |-------|------------|-----------|
 | CV-1  | Follow **PEP 8** and enforce it with **`ruff`** (linting), **`black`** (formatting, line length 88), and **`isort`** (import ordering) in CI, as configured in `pyproject.toml`. | Tools are already present in the repo; consistent style reduces review friction. |
 | CV-2  | Use **`dataclasses`** for value objects (Card, Hand) and **`enum.IntEnum`** for ordered ranks and categories. | Idiomatic Python for domain value types; IntEnum makes rank comparison a simple `>` / `<`. |
-| CV-3  | Module names mirror the domain: `card`, `hand`, `ranking`, `parser`, `cli`. No generic names like `utils` or `helpers`. | Keeps the ubiquitous language visible in the file system. |
-| CV-4  | The nine hand categories must be named exactly as defined in Chapter 1 FR-2 everywhere in code, tests, and documentation. | A single ubiquitous language prevents translation errors between layers. |
+| CV-3  | Module names mirror the domain: `card`, `hand`, `parser`, `ranker`, `comparator`, `formatter`, `cli`. No generic names like `utils` or `helpers`. | Keeps the ubiquitous language visible in the file system. |
+| CV-4  | The ten hand categories must be named exactly as defined in Chapter 1 FR-2 everywhere in code, tests, and documentation. | A single ubiquitous language prevents translation errors between layers. |

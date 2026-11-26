@@ -52,10 +52,10 @@ PlantUML source: [diagrams/c4-component-cli.puml](diagrams/c4-component-cli.puml
 
 | Attribute | Detail |
 |-----------|--------|
-| Responsibility | Classifies a `Hand` into a `RankedHand`: a `HandCategory` (IntEnum, 1–9) plus a tiebreaker key (tuple of ints). |
+| Responsibility | Classifies a `Hand` into a `RankedHand`: a `HandCategory` (IntEnum, 1–10) plus a tiebreaker key (tuple of ints). |
 | Public interface | `rank_hand(hand: Hand) -> RankedHand` |
 | Dependencies | `card`, `hand` |
-| Key design rule | Contains all poker rules. The tiebreaker key is constructed so that Python tuple comparison (`>`, `<`) resolves all ties without any special-case branching in the comparator. `ROYAL_FLUSH` is category 9 with an empty tiebreaker `()`. |
+| Key design rule | Contains all poker rules. The tiebreaker key is constructed so that Python tuple comparison (`>`, `<`) resolves all ties without any special-case branching in the comparator. `ROYAL_FLUSH` is category 10 with an empty tiebreaker `()`. |
 
 ### `comparator` — Winner determination
 

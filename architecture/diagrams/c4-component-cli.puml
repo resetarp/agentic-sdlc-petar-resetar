@@ -12,7 +12,7 @@ System_Ext(testHarness, "Acceptance Test Suite", "Drives the system with example
 Container_Boundary(cli, "Poker Hands CLI") {
     Component(cliEntry, "cli", "Python module", "Entry point. Reads stdin line by line, orchestrates the pipeline, writes stdout.")
     Component(parser, "parser", "Python module", "Parses a raw input line into two Hand instances. Raises ValueError on malformed input.")
-    Component(ranker, "ranker", "Python module", "Classifies a Hand into a HandCategory (IntEnum 1-9) plus a tiebreaker key tuple. Contains all poker rules.")
+    Component(ranker, "ranker", "Python module", "Classifies a Hand into a HandCategory (IntEnum 1-10) plus a tiebreaker key tuple. Contains all poker rules.")
     Component(comparator, "comparator", "Python module", "Compares two RankedHand values by tuple comparison and returns a Result (winner name or tie).")
     Component(formatter, "formatter", "Python module", "Converts a Result into the kata output string.")
     Component(hand, "hand", "Python module", "Hand value object: player name + exactly 5 Cards.")

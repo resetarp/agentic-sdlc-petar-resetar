@@ -54,5 +54,5 @@ PlantUML source: [diagrams/c4-context.puml](diagrams/c4-context.puml)
 |-----------|--------|
 | Direction | Test suite → System |
 | Channel   | CLI subprocess (stdin/stdout) **or** direct Python function calls |
-| Purpose   | Drives all nine hand categories, tie-breaking rules, and edge cases defined in the Gherkin feature files |
+| Purpose   | Drives all ten hand categories, tie-breaking rules, and edge cases defined in the Gherkin feature files |
 | Isolation | No network, no filesystem side-effects; every test run is hermetic |
