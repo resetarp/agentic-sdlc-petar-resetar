@@ -15,7 +15,7 @@ Output: White wins. - with high card: Ace
 ```
 
 The kata is a vehicle for practising clean domain modelling, test-driven
-development with pytest-bdd, and a well-structured Python codebase — not for
+development with pytest-bdd, and a well-structured Python codebase - not for
 building production infrastructure.
 
 ## 1.2 Requirements Overview
