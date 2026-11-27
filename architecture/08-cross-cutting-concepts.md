@@ -28,7 +28,7 @@ The system has one meaningful error path: invalid input from the user.
 
 | Situation | Where detected | Behaviour |
 |-----------|---------------|-----------|
-| Wrong number of cards in a hand | `parser` | Raises `ValueError` with a message naming the player and the actual count. |
+| Wrong number of cards in a hand | `parser` | Raises `ValueError` with a message naming the player and the actual count, e.g. `Black hand must contain exactly 5 cards, got 3`. |
 | Unrecognised rank or suit token | `parser` | Raises `ValueError` naming the bad token. |
 | Duplicate card, within one hand or shared by both hands | `parser` | Raises `ValueError` naming the duplicate card (and, when it is in both hands, both players). |
 | Any other unexpected exception | `cli` | Caught by the top-level handler; prints `Error: <message>` to stdout and continues to the next line. |
@@ -39,6 +39,11 @@ Rules:
 - Errors are reported per line; a bad line does not abort processing of
   subsequent lines.
 - No stack traces are shown to the user.
+- A `ValueError` from `parser` is printed as `Error: invalid input - <message>.`
+  (Ch 6.3). Any other exception is printed as `Error: <message>`.
+- Blank or whitespace-only lines are skipped without any output.
+- The process exits with status 0 once all input has been read, even if some
+  lines produced error lines: errors are reported per line on stdout.
 
 ## 8.3 Validation
 

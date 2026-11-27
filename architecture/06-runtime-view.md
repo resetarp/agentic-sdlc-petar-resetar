@@ -25,7 +25,7 @@ PlantUML source: [diagrams/seq-tie.puml](diagrams/seq-tie.puml)
 ## 6.3 Scenario 3 - Malformed Input
 
 Input line: `Black: 2H 3D 5S  White: 2C 3H 4S 8C AH` (Black has only 3 cards)
-Expected output: `Error: invalid input – Black hand must contain exactly 5 cards.`
+Expected output: `Error: invalid input - Black hand must contain exactly 5 cards, got 3.`
 
 ![Scenario: malformed input](diagrams/seq-malformed-input.svg)
 

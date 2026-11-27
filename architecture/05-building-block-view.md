@@ -79,7 +79,7 @@ PlantUML source: [diagrams/c4-component-cli.puml](diagrams/c4-component-cli.puml
 
 | Attribute | Detail |
 |-----------|--------|
-| Responsibility | Reads lines from stdin, calls parser → ranker → comparator → formatter, writes each result to stdout. Handles top-level errors (malformed input) by printing an error message and continuing. |
+| Responsibility | Reads lines from stdin, calls parser → ranker → comparator → formatter, writes each result to stdout. Handles top-level errors (malformed input) by printing an error message and continuing. Skips blank lines; exits with status 0 after the last line (Ch 8.2). |
 | Public interface | `main()` (invoked by `python -m poker_hands` or a console-script entry point) |
 | Dependencies | `parser`, `ranker`, `comparator`, `formatter` |
 
