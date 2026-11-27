@@ -27,7 +27,7 @@ Listed in ascending rank order (lowest to highest):
 | **Flush** | Five cards of the same suit (ranks need not be consecutive). Ranked using High Card rules. |
 | **Full House** | Three cards of one rank and two cards of another rank. Ranked by the three-of-a-kind rank, then the pair rank. |
 | **Four of a Kind** | Four cards sharing the same rank. Ranked by that rank. |
-| **Straight Flush** | Five consecutive ranks all of the same suit, where the highest card is not an Ace. Ranked by the highest card. |
+| **Straight Flush** | Five consecutive ranks all of the same suit, other than 10-J-Q-K-A (that is a Royal Flush). Includes the Ace-low A-2-3-4-5 of one suit, where the Ace counts as 1 (ADR-006). Ranked by the highest card. |
 | **Royal Flush** | A Straight Flush with ranks 10-J-Q-K-A. The highest possible hand; two Royal Flushes are always a tie. |
 
 ## Pipeline Terms
