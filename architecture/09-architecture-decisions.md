@@ -44,7 +44,7 @@ in one direction only; no cycles are permitted.
 - Each stage has a single, clear responsibility and can be unit-tested in isolation.
 - A linear dependency graph makes the system easy to follow top-to-bottom.
 - Alternatives considered:
-  - *Single-module script*: simple to start but conflates I/O, rules, and formatting — hard to test individual rules.
+  - *Single-module script*: simple to start but conflates I/O, rules, and formatting - hard to test individual rules.
   - *Class hierarchy per hand category*: adds polymorphism overhead that is not justified for a kata of this size.
 
 **Consequences:**
@@ -63,7 +63,7 @@ categories (e.g. Full House beats Flush) and between card ranks (e.g. Ace beats
 King). These comparisons must be correct, readable, and free of magic numbers.
 
 **Decision:**
-Represent `HandCategory` and `Rank` (2–14) as `IntEnum`. `HandCategory` assigns
+Represent `HandCategory` and `Rank` (2-14) as `IntEnum`. `HandCategory` assigns
 one integer per category in rank order: `HIGH_CARD = 1` through `ROYAL_FLUSH = 10`.
 Tiebreakers are expressed as tuples of integers so that Python's built-in tuple
 comparison resolves all ties without special-case branching.
@@ -71,7 +71,7 @@ comparison resolves all ties without special-case branching.
 **Rationale:**
 - `IntEnum` makes `HandCategory.FULL_HOUSE > HandCategory.FLUSH` a plain `>`
   with no helper function needed.
-- Tiebreaker tuples delegate all comparison logic to Python's tuple ordering —
+- Tiebreaker tuples delegate all comparison logic to Python's tuple ordering -
   the comparator needs no poker knowledge.
 - Alternatives considered:
   - *Plain integers with constants*: loses type safety and IDE support.
@@ -79,7 +79,7 @@ comparison resolves all ties without special-case branching.
   - *Custom `__lt__` on a dataclass*: more code, same result.
 
 **Consequences:**
-- `HandCategory` values run 1–10 in strict rank order and must never change
+- `HandCategory` values run 1-10 in strict rank order and must never change
   once agreed (changing an integer breaks comparisons silently).
 - `ROYAL_FLUSH = 10` with an empty tiebreaker `()` means two Royal Flushes are
   always a tie, which is correct.
@@ -121,7 +121,8 @@ Royal Flushes are always equal.
 **Status:** Accepted
 
 **Context:**
-Invalid input (wrong card count, unknown token, duplicate card) must be caught
+Invalid input (wrong card count, unknown token, duplicate card within a hand or
+across both hands) must be caught
 and reported clearly. The question is where validation lives.
 
 **Decision:**

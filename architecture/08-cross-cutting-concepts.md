@@ -10,11 +10,11 @@ The shared vocabulary and type system used by every module:
 
 | Type | Kind | Description |
 |------|------|-------------|
-| `Rank` | `IntEnum` (2–14) | Card face value; `Rank.TWO = 2` through `Rank.ACE = 14`. Integer value enables plain `>` / `<` comparison. |
+| `Rank` | `IntEnum` (2-14) | Card face value; `Rank.TWO = 2` through `Rank.ACE = 14`. Integer value enables plain `>` / `<` comparison. |
 | `Suit` | `IntEnum` | One of `CLUBS`, `DIAMONDS`, `HEARTS`, `SPADES`. Integer ordering is arbitrary; suits are only compared for equality (flush detection). |
 | `Card` | frozen `dataclass` | A `(Rank, Suit)` pair. Immutable; hashable. |
 | `Hand` | frozen `dataclass` | A player name and a `tuple[Card, ...]` of exactly 5 cards. |
-| `HandCategory` | `IntEnum` (1–10) | Ten hand categories in rank order: `HIGH_CARD = 1`, `PAIR = 2`, `TWO_PAIRS = 3`, `THREE_OF_A_KIND = 4`, `STRAIGHT = 5`, `FLUSH = 6`, `FULL_HOUSE = 7`, `FOUR_OF_A_KIND = 8`, `STRAIGHT_FLUSH = 9`, `ROYAL_FLUSH = 10`. |
+| `HandCategory` | `IntEnum` (1-10) | Ten hand categories in rank order: `HIGH_CARD = 1`, `PAIR = 2`, `TWO_PAIRS = 3`, `THREE_OF_A_KIND = 4`, `STRAIGHT = 5`, `FLUSH = 6`, `FULL_HOUSE = 7`, `FOUR_OF_A_KIND = 8`, `STRAIGHT_FLUSH = 9`, `ROYAL_FLUSH = 10`. |
 | `RankedHand` | frozen `dataclass` | A `Hand` annotated with its `HandCategory` and a tiebreaker key `tuple[int, ...]`. |
 | `Result` | frozen `dataclass` | Holds the winner's name and the winning `HandCategory` with reason, or a tie flag. |
 
@@ -28,9 +28,9 @@ The system has one meaningful error path: invalid input from the user.
 
 | Situation | Where detected | Behaviour |
 |-----------|---------------|-----------|
-| Wrong number of cards in a hand | `parser` | Raises `ValueError` with a message naming the player and the actual count. |
+| Wrong number of cards in a hand | `parser` | Raises `ValueError` with a message naming the player and the actual count, e.g. `Black hand must contain exactly 5 cards, got 3`. |
 | Unrecognised rank or suit token | `parser` | Raises `ValueError` naming the bad token. |
-| Duplicate cards within a hand | `parser` | Raises `ValueError` naming the duplicate. |
+| Duplicate card, within one hand or shared by both hands | `parser` | Raises `ValueError` naming the duplicate card (and, when it is in both hands, both players). |
 | Any other unexpected exception | `cli` | Caught by the top-level handler; prints `Error: <message>` to stdout and continues to the next line. |
 
 Rules:
@@ -39,6 +39,11 @@ Rules:
 - Errors are reported per line; a bad line does not abort processing of
   subsequent lines.
 - No stack traces are shown to the user.
+- A `ValueError` from `parser` is printed as `Error: invalid input - <message>.`
+  (Ch 6.3). Any other exception is printed as `Error: <message>`.
+- Blank or whitespace-only lines are skipped without any output.
+- The process exits with status 0 once all input has been read, even if some
+  lines produced error lines: errors are reported per line on stdout.
 
 ## 8.3 Validation
 
@@ -48,7 +53,7 @@ component re-validates:
 1. The input line matches the pattern `<Name>: C1 C2 C3 C4 C5  <Name>: C1 C2 C3 C4 C5`.
 2. Each token is a valid `(Rank, Suit)` pair from the kata's notation.
 3. Each hand contains exactly 5 cards.
-4. No card appears twice in the same hand.
+4. No card appears twice in the input line, whether within one hand or across both hands. Both hands are dealt from a single 52-card deck.
 
 After `parser` returns two `Hand` instances, all subsequent components can
 treat their input as valid without defensive checks.
@@ -86,6 +91,6 @@ Enforced automatically in CI on every commit:
 
 | Tool | Purpose | Configuration |
 |------|---------|---------------|
-| `ruff` | Linting (style, bugs, complexity) | `pyproject.toml` — rules E, F, W, I, N, UP, B, SIM |
-| `black` | Formatting | `pyproject.toml` — line length 88, target Python 3.12 |
-| `isort` | Import ordering | `pyproject.toml` — black-compatible profile |
+| `ruff` | Linting (style, bugs, complexity) | `pyproject.toml` - rules E, F, W, I, N, UP, B, SIM |
+| `black` | Formatting | `pyproject.toml` - line length 88, target Python 3.12 |
+| `isort` | Import ordering | `pyproject.toml` - black-compatible profile |

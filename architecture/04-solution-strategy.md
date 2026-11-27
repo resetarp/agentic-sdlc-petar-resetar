@@ -8,7 +8,7 @@ print a verdict. The solution strategy follows directly from that:
 1. **Model the domain first.** Cards, hands, and hand categories are the core
    concepts. Getting their representation right makes every other layer simple.
 2. **Separate concerns into a small pipeline.** Input text flows through four
-   distinct stages — parse → classify → compare → format — each testable in
+   distinct stages - parse → classify → compare → format - each testable in
    isolation.
 3. **Keep the technology boring.** Python's standard library (`dataclasses`,
    `enum`, `re`) is sufficient. No framework is needed and none is used.
@@ -70,7 +70,7 @@ The system is decomposed into five modules that form a linear pipeline:
 
 ### Value objects and IntEnum for domain types
 
-`Card` and `Hand` are immutable `dataclasses`. `Rank` (2–A) and `Suit` (C/D/H/S)
+`Card` and `Hand` are immutable `dataclasses`. `Rank` (2-A) and `Suit` (C/D/H/S)
 are `IntEnum`, so rank comparison is a plain `>` / `<`. `HandCategory` is also
 `IntEnum`, so category comparison is likewise a plain `>` / `<`.
 
@@ -80,13 +80,13 @@ Flush, Full House, Four of a Kind, Straight Flush, Royal Flush.
 
 ### Tiebreaker key
 
-`ranker` produces a tiebreaker key — a tuple of integers — alongside the
+`ranker` produces a tiebreaker key - a tuple of integers - alongside the
 category. Python tuple comparison handles all tie-breaking automatically:
 the first differing element decides the winner, with no special-case branching
 in the comparator.
 
 For example:
-- **Pair** key: `(pair_rank, kicker3, kicker2, kicker1)` — highest pair first,
+- **Pair** key: `(pair_rank, kicker3, kicker2, kicker1)` - highest pair first,
   then kickers in descending order.
 - **Two Pairs** key: `(high_pair_rank, low_pair_rank, kicker)`.
 - **Full House** key: `(three_rank, pair_rank)`.
@@ -96,7 +96,7 @@ For example:
 
 A Royal Flush (10-J-Q-K-A of the same suit) is classified as `ROYAL_FLUSH = 10`,
 one step above `STRAIGHT_FLUSH = 9`. Because it is always the highest possible
-hand, its tiebreaker key is the empty tuple `()` — two Royal Flushes are always
+hand, its tiebreaker key is the empty tuple `()` - two Royal Flushes are always
 a tie.
 
 ### Ace-low straight
