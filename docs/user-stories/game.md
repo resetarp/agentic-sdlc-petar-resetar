@@ -12,7 +12,7 @@ the first story has to deliver a working end-to-end path.
 **Priority**: Core (Pareto 20%)
 **Value**: decides about 25% of all random games, and it builds the whole
 pipeline that every later story depends on.
-**Status**: Bundle written, not implemented
+**Status**: Approved, not implemented
 
 ```
 AS A player
@@ -679,7 +679,7 @@ and a testable THEN clause.
 **Value**: Pair and Two Pairs together decide 69.2% of all random games
 (60.2% from Pair alone). Without this story, any hand containing a pair
 is silently misclassified as High Card.
-**Status**: Bundle written, not implemented
+**Status**: Approved, not implemented
 
 ```
 AS A player
@@ -1265,3 +1265,1548 @@ Ten displays as "10", face cards spelled out)
 | GAME-FE-002.1-S3 | GAME-FE-002.1 | Ch 3.3, FR-4 | `Black wins. - with two pairs: Jack and 3` |
 | GAME-FE-002.1-S4 | GAME-FE-002.1 | Ch 3.3, FR-4, QS-4 | `Black wins. - with two pairs: Jack and 8, high card: 3` |
 | GAME-FE-002.1-S5 | GAME-FE-002.1 | Ch 3.3, Ch 12 Card notation | `White wins. - with two pairs: 10 and 4` |
+
+---
+
+## GAME-STORY-003: Sets of equal ranks
+
+**Priority**: Supporting
+**Value**: Three of a Kind, Full House, and Four of a Kind together decide 4.5% of
+all random games (4.149% + 0.288% + 0.048%). Includes kata sample 2.
+**Status**: Approved, not implemented
+
+```
+AS A player
+I WANT to enter two hands where at least one contains three of a kind, a full house, or four of a kind and be told who wins and why
+SO THAT games decided by repeated ranks above a pair are settled correctly
+```
+
+**Architecture references**
+
+- Ch 1.2 FR-2 (Three of a Kind, Full House, Four of a Kind), FR-3, FR-4
+- Ch 4.4 Tiebreaker key (Full House key)
+- Ch 5.3 `ranker`, `comparator`, `formatter`
+- Ch 6.1 Runtime scenario (kata sample 2: full house beats flush)
+- Ch 8.1 `HandCategory` THREE_OF_A_KIND = 4, FULL_HOUSE = 7, FOUR_OF_A_KIND = 8
+- Ch 10.2 QS-1 (kata sample 2), QS-3
+- Ch 11.1 R-1 (tiebreaker key errors)
+- Ch 12 Glossary (Three of a Kind: "Ranked by that rank"; Four of a Kind: "Ranked by that rank")
+- ADR-003 (IntEnum and tuple comparison)
+- README.md "Decided questions" (Full House reason format "X over Y", primary-rank table)
+
+**Scope**
+
+- In scope: Three of a Kind, Full House, and Four of a Kind classification,
+  their tiebreaker keys, reason population, and output strings.
+- Out of scope: Straight and Flush (GAME-STORY-004), Straight Flush and Royal
+  Flush (GAME-STORY-005).
+- S1 deliberately places a Flush on the losing side. Until GAME-STORY-004 is
+  built, the ranker treats White's hand as High Card; a Full House beats High
+  Card just as it beats a Flush, so S1 passes at both stages of development.
+
+**Tiebreaker keys for this story:**
+- Full House: `(three_rank, pair_rank)` as defined in Ch 4.4.
+- Three of a Kind: `(three_rank,)`. Ch 12 states "Ranked by that rank." With
+  one 52-card deck, two hands can never share the same three-rank (only four
+  cards of each rank exist; one hand takes three of them, leaving at most one
+  for the other), so a kicker position in the key is never needed.
+- Four of a Kind: `(quad_rank,)`. Ch 12 states "Ranked by that rank." The
+  same deck constraint makes a shared quad rank impossible.
+
+**Full House reason format (confirmed here):** reason = `(three_rank, pair_rank)`,
+both primary ranks. The formatter writes them as `<three> over <pair>`,
+e.g. `full house: 4 over 2` (kata sample 2). Three of a Kind reason = `(three_rank,)`,
+one primary rank. Four of a Kind reason = `(quad_rank,)`, one primary rank.
+
+---
+
+### Acceptance scenarios (end to end, through the CLI)
+
+### SCENARIO 1: Full House beats Flush (kata sample 2)
+
+**Scenario ID**: GAME-STORY-003-S1
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: 2H 4S 4C 2D 4H  White: 2S 8S AS QS 3S` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with full house: 4 over 2`
+
+### SCENARIO 2: Three of a Kind beats Two Pairs
+
+**Scenario ID**: GAME-STORY-003-S2
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: 7H 7D 7S KH 3C  White: AS AH 9S 9H QC` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with three of a kind: 7`
+
+### SCENARIO 3: Four of a Kind beats Full House
+
+**Scenario ID**: GAME-STORY-003-S3
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: 9S 9H 9C 9D KH  White: 3H 3D 3C KS KD` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with four of a kind: 9`
+
+### SCENARIO 4: Higher three-rank decides between Full Houses
+
+**Scenario ID**: GAME-STORY-003-S4
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: KH KD KC 2S 2H  White: QS QH QC AH AD` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with full house: King over 2`
+
+### SCENARIO 5: Higher three-rank decides between Three of a Kind hands
+
+**Scenario ID**: GAME-STORY-003-S5
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: 8H 8D 8S KH 3C  White: 6C 6S 6H QD 2S` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with three of a kind: 8`
+
+### SCENARIO 6: Higher quad rank decides between Four of a Kind hands
+
+**Scenario ID**: GAME-STORY-003-S6
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: 9S 9H 9C 9D KH  White: 6S 6H 6C 6D AS` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with four of a kind: 9`
+
+---
+
+### INFRA sub-stories
+
+#### GAME-INFRA-003.1: Sets-of-ranks acceptance feature file
+
+```
+AS A developer
+I WANT the GAME-STORY-003 scenarios in their own feature file
+SO THAT they run with the rest of the suite and appear separately in the test report
+```
+
+**Architecture references**: Ch 4.5 Testing strategy, Ch 8.5 Testability,
+OC-2, QS-5, Ch 7.3 CI runner (Artefacts)
+
+### SCENARIO 1: Sets-of-ranks scenarios are collected alongside earlier ones
+
+**Scenario ID**: GAME-INFRA-003.1-S1
+
+**GIVEN**
+* `features/sets_of_ranks.feature` contains GAME-STORY-003-S1 to S6
+
+**WHEN**
+* `pytest` is run from the repository root
+
+**THEN**
+* the six scenarios are collected and reported by their names
+* all GAME-STORY-001 and GAME-STORY-002 scenarios still pass
+
+### SCENARIO 2: CI reports the new scenarios without workflow changes
+
+**Scenario ID**: GAME-INFRA-003.1-S2
+
+**GIVEN**
+* the CI workflow from GAME-INFRA-001.3
+
+**WHEN**
+* a commit adding `features/sets_of_ranks.feature` is pushed
+
+**THEN**
+* the workflow file is unchanged
+* the JUnit XML report contains GAME-STORY-003-S1 to S6
+
+#### Deployment, data store, events and monitoring: no new work
+
+All reused from GAME-STORY-001 (GAME-INFRA-001.1, 001.3, 001.4). Data store
+and events remain not applicable (Ch 1.2, ADR-001, Ch 3.1). No logging
+(Ch 8.6).
+
+---
+
+### BE sub-stories
+
+#### GAME-BE-003.1: Classify Three of a Kind with a tiebreaker key
+
+```
+AS A developer
+I WANT `rank_hand` to return THREE_OF_A_KIND with key (three_rank,)
+SO THAT three-of-a-kind hands compare correctly with one tuple comparison
+```
+
+**Architecture references**: Ch 5.3 `ranker`, Ch 8.1 THREE_OF_A_KIND = 4,
+Ch 12 Glossary ("Ranked by that rank"), ADR-003, QS-6
+
+### SCENARIO 1: Three of a Kind classified with correct key
+
+**Scenario ID**: GAME-BE-003.1-S1
+
+**GIVEN**
+* a `Hand` built directly with 7H 7D 7S KH 3C (three 7s)
+
+**WHEN**
+* `rank_hand` is called
+
+**THEN**
+* `ranked.category == HandCategory.THREE_OF_A_KIND`
+* `ranked.tiebreaker_key == (7,)`
+
+---
+
+#### GAME-BE-003.2: Classify Full House with a tiebreaker key
+
+```
+AS A developer
+I WANT `rank_hand` to return FULL_HOUSE with key (three_rank, pair_rank)
+SO THAT full house hands compare correctly with one tuple comparison
+```
+
+**Architecture references**: Ch 4.4 Tiebreaker key (Full House key),
+Ch 5.3 `ranker`, Ch 8.1 FULL_HOUSE = 7, ADR-003, QS-6, R-1
+
+### SCENARIO 1: Full House classified with correct key
+
+**Scenario ID**: GAME-BE-003.2-S1
+
+**GIVEN**
+* a `Hand` built directly with 2H 4S 4C 2D 4H (three 4s, pair 2s)
+
+**WHEN**
+* `rank_hand` is called
+
+**THEN**
+* `ranked.category == HandCategory.FULL_HOUSE`
+* `ranked.tiebreaker_key == (4, 2)`
+
+### SCENARIO 2: Three-rank comes first regardless of card order
+
+**Scenario ID**: GAME-BE-003.2-S2
+
+**GIVEN**
+* a `Hand` built directly with KS KC 2H KD 2S (pair 2s dealt before the third King)
+
+**WHEN**
+* `rank_hand` is called
+
+**THEN**
+* `ranked.category == HandCategory.FULL_HOUSE`
+* `ranked.tiebreaker_key == (13, 2)`
+
+---
+
+#### GAME-BE-003.3: Classify Four of a Kind with a tiebreaker key
+
+```
+AS A developer
+I WANT `rank_hand` to return FOUR_OF_A_KIND with key (quad_rank,)
+SO THAT four-of-a-kind hands compare correctly with one tuple comparison
+```
+
+**Architecture references**: Ch 5.3 `ranker`, Ch 8.1 FOUR_OF_A_KIND = 8,
+Ch 12 Glossary ("Ranked by that rank"), ADR-003, QS-6
+
+### SCENARIO 1: Four of a Kind classified with correct key
+
+**Scenario ID**: GAME-BE-003.3-S1
+
+**GIVEN**
+* a `Hand` built directly with 9S 9H 9C 9D KH (four 9s)
+
+**WHEN**
+* `rank_hand` is called
+
+**THEN**
+* `ranked.category == HandCategory.FOUR_OF_A_KIND`
+* `ranked.tiebreaker_key == (9,)`
+
+---
+
+#### GAME-BE-003.4: Primary-rank table extended for Three of a Kind, Full House, Four of a Kind
+
+```
+AS A developer
+I WANT the primary-rank table in `ranker` to include entries for the three new categories
+SO THAT the comparator correctly distinguishes primary ranks from kickers for these categories
+```
+
+**Architecture references**: Ch 4.4 Tiebreaker key, Ch 5.3 `ranker`,
+README.md "Which rank(s) the reason shows"
+
+### SCENARIO 1: Table entries for new categories are correct
+
+**Scenario ID**: GAME-BE-003.4-S1
+
+**GIVEN**
+* the primary-rank table in `ranker`
+
+**WHEN**
+* it is read for THREE_OF_A_KIND, FULL_HOUSE and FOUR_OF_A_KIND
+
+**THEN**
+* THREE_OF_A_KIND maps to 1
+* FULL_HOUSE maps to 2
+* FOUR_OF_A_KIND maps to 1
+
+---
+
+#### GAME-BE-003.5: Comparator resolves Three of a Kind, Full House, and Four of a Kind results
+
+```
+AS A developer
+I WANT `compare` to populate `result.reason` and `result.kicker` correctly for the three new categories
+SO THAT the formatter produces the exact output string without poker knowledge
+```
+
+**Architecture references**: Ch 5.3 `comparator`, Ch 8.1 `Result`, ADR-002,
+ADR-003, Ch 4.4, Ch 12, README.md "Decided questions"
+
+### SCENARIO 1: Full House win over Flush, reason is both primary ranks
+
+**Scenario ID**: GAME-BE-003.5-S1
+
+**GIVEN**
+* Black is FULL_HOUSE with key `(4, 2)` (valid input: `Black: 2H 4S 4C 2D 4H  White: 2S 8S AS QS 3S`)
+* White is FLUSH with key `(14, 12, 8, 3, 2)`
+
+**WHEN**
+* `compare(black, white)` is called
+
+**THEN**
+* `result.winner == "Black"`
+* `result.category == HandCategory.FULL_HOUSE`
+* `result.reason == (Rank.FOUR, Rank.TWO)`
+* `result.kicker is None`
+
+### SCENARIO 2: Three of a Kind win over Two Pairs, reason is the three-rank
+
+**Scenario ID**: GAME-BE-003.5-S2
+
+**GIVEN**
+* Black is THREE_OF_A_KIND with key `(7,)` (valid input: `Black: 7H 7D 7S KH 3C  White: AS AH 9S 9H QC`)
+* White is TWO_PAIRS with key `(14, 9, 12)`
+
+**WHEN**
+* `compare(black, white)` is called
+
+**THEN**
+* `result.winner == "Black"`
+* `result.category == HandCategory.THREE_OF_A_KIND`
+* `result.reason == (Rank.SEVEN,)`
+* `result.kicker is None`
+
+### SCENARIO 3: Four of a Kind win over Full House, reason is the quad rank
+
+**Scenario ID**: GAME-BE-003.5-S3
+
+**GIVEN**
+* Black is FOUR_OF_A_KIND with key `(9,)` (valid input: `Black: 9S 9H 9C 9D KH  White: 3H 3D 3C KS KD`)
+* White is FULL_HOUSE with key `(3, 13)`
+
+**WHEN**
+* `compare(black, white)` is called
+
+**THEN**
+* `result.winner == "Black"`
+* `result.category == HandCategory.FOUR_OF_A_KIND`
+* `result.reason == (Rank.NINE,)`
+* `result.kicker is None`
+
+---
+
+### FE sub-stories
+
+#### GAME-FE-003.1: Format Three of a Kind, Full House, and Four of a Kind verdicts
+
+```
+AS A player
+I WANT Three of a Kind, Full House, and Four of a Kind results formatted in the kata's wording
+SO THAT I can read the decisive rank(s) at a glance
+```
+
+**Architecture references**: Ch 3.3 Poker Hands to Player, Ch 5.3 `formatter`,
+Ch 1.2 FR-4, TD-3, README.md "Decided questions" (Full House "X over Y",
+Ten displays as "10", face cards spelled out)
+
+### SCENARIO 1: Full House formatted with "over" (kata sample 2)
+
+**Scenario ID**: GAME-FE-003.1-S1
+
+**GIVEN**
+* a Result with winner "Black", category FULL_HOUSE, reason `(Rank.FOUR, Rank.TWO)`, kicker `None`
+  (produced by `Black: 2H 4S 4C 2D 4H  White: 2S 8S AS QS 3S`)
+
+**WHEN**
+* `format_result` is called
+
+**THEN**
+* it returns `Black wins. - with full house: 4 over 2`
+
+### SCENARIO 2: Full House with face card ranks
+
+**Scenario ID**: GAME-FE-003.1-S2
+
+**GIVEN**
+* a Result with winner "Black", category FULL_HOUSE, reason `(Rank.KING, Rank.TWO)`, kicker `None`
+  (produced by `Black: KH KD KC 2S 2H  White: QS QH QC AH AD`)
+
+**WHEN**
+* `format_result` is called
+
+**THEN**
+* it returns `Black wins. - with full house: King over 2`
+
+### SCENARIO 3: Three of a Kind formatted with single rank
+
+**Scenario ID**: GAME-FE-003.1-S3
+
+**GIVEN**
+* a Result with winner "Black", category THREE_OF_A_KIND, reason `(Rank.SEVEN,)`, kicker `None`
+  (produced by `Black: 7H 7D 7S KH 3C  White: AS AH 9S 9H QC`)
+
+**WHEN**
+* `format_result` is called
+
+**THEN**
+* it returns `Black wins. - with three of a kind: 7`
+
+### SCENARIO 4: Four of a Kind formatted with single rank
+
+**Scenario ID**: GAME-FE-003.1-S4
+
+**GIVEN**
+* a Result with winner "Black", category FOUR_OF_A_KIND, reason `(Rank.NINE,)`, kicker `None`
+  (produced by `Black: 9S 9H 9C 9D KH  White: 3H 3D 3C KS KD`)
+
+**WHEN**
+* `format_result` is called
+
+**THEN**
+* it returns `Black wins. - with four of a kind: 9`
+
+---
+
+### Implementation order
+
+1. GAME-INFRA-003.1: add `features/sets_of_ranks.feature`
+2. GAME-BE-003.1: extend `ranker` to classify Three of a Kind
+3. GAME-BE-003.2: extend `ranker` to classify Full House
+4. GAME-BE-003.3: extend `ranker` to classify Four of a Kind
+5. GAME-BE-003.4: extend the primary-rank table in `ranker`
+6. GAME-BE-003.5: extend `comparator` for the three new categories
+7. GAME-FE-003.1: extend `formatter` for the three new categories
+8. GAME-STORY-003-S1 to S6 end to end, plus earlier stories as regression
+
+---
+
+### Traceability check
+
+| Scenario | Parent | Architecture | Checks (THEN) |
+|---|---|---|---|
+| GAME-STORY-003-S1 | GAME-STORY-003 | Ch 6.1, QS-1 sample 2 | exact output line |
+| GAME-STORY-003-S2 | GAME-STORY-003 | Ch 1.2 FR-2, FR-4 | exact output line |
+| GAME-STORY-003-S3 | GAME-STORY-003 | Ch 1.2 FR-2, FR-4 | exact output line |
+| GAME-STORY-003-S4 | GAME-STORY-003 | Ch 4.4 Full House key, R-1 | exact output line |
+| GAME-STORY-003-S5 | GAME-STORY-003 | Ch 12, R-1 | exact output line |
+| GAME-STORY-003-S6 | GAME-STORY-003 | Ch 12, R-1 | exact output line |
+| GAME-INFRA-003.1-S1 | GAME-INFRA-003.1 | Ch 8.5, OC-2 | scenarios collected; earlier pass |
+| GAME-INFRA-003.1-S2 | GAME-INFRA-003.1 | Ch 7.3 | workflow unchanged; IDs in report |
+| GAME-BE-003.1-S1 | GAME-BE-003.1 | Ch 12, Ch 8.1 | THREE_OF_A_KIND; key (7,) |
+| GAME-BE-003.2-S1 | GAME-BE-003.2 | Ch 4.4, Ch 8.1 | FULL_HOUSE; key (4,2) |
+| GAME-BE-003.2-S2 | GAME-BE-003.2 | Ch 4.4, R-1 | three-rank first regardless of order |
+| GAME-BE-003.3-S1 | GAME-BE-003.3 | Ch 12, Ch 8.1 | FOUR_OF_A_KIND; key (9,) |
+| GAME-BE-003.4-S1 | GAME-BE-003.4 | Ch 4.4, Ch 5.3 ranker | table values 1, 2, 1 |
+| GAME-BE-003.5-S1 | GAME-BE-003.5 | Ch 5.3, ADR-002, QS-1 | winner; reason (FOUR,TWO); kicker None |
+| GAME-BE-003.5-S2 | GAME-BE-003.5 | Ch 5.3, ADR-002 | winner; reason (SEVEN,); kicker None |
+| GAME-BE-003.5-S3 | GAME-BE-003.5 | Ch 8.1, ADR-002 | winner; reason (NINE,); kicker None |
+| GAME-FE-003.1-S1 | GAME-FE-003.1 | Ch 3.3, FR-4, QS-1 | `Black wins. - with full house: 4 over 2` |
+| GAME-FE-003.1-S2 | GAME-FE-003.1 | Ch 3.3, FR-4 | `Black wins. - with full house: King over 2` |
+| GAME-FE-003.1-S3 | GAME-FE-003.1 | Ch 3.3, FR-4 | `Black wins. - with three of a kind: 7` |
+| GAME-FE-003.1-S4 | GAME-FE-003.1 | Ch 3.3, FR-4 | `Black wins. - with four of a kind: 9` |
+
+---
+
+## GAME-STORY-004: Straights and flushes
+
+**Priority**: Supporting
+**Value**: Straight and Flush together decide 1.2% of all random games
+(0.781% + 0.392%). Includes the Ace-low straight (ADR-006).
+**Status**: Approved, not implemented
+
+```
+AS A player
+I WANT to enter two hands where at least one contains a straight or a flush and be told who wins and why
+SO THAT games decided by consecutive ranks or a single suit are settled correctly
+```
+
+**Architecture references**
+
+- Ch 1.2 FR-2 (Straight, Flush), FR-3, FR-4
+- Ch 4.4 Tiebreaker key (High Card / Flush key: five descending ranks)
+- Ch 5.3 `ranker`, `comparator`, `formatter`
+- Ch 8.1 `HandCategory` STRAIGHT = 5, FLUSH = 6
+- Ch 10.2 QS-3 (tie within category)
+- Ch 11.1 R-1 (tiebreaker key errors), R-2 (Royal Flush misclassified as Straight Flush)
+- Ch 12 Glossary (Straight: "Ranked by the highest card"; Flush: "Ranked using High Card rules")
+- ADR-003 (IntEnum and tuple comparison)
+- ADR-006 (Ace-low straight: detected as `[2,3,4,5,14]`, key `(5,4,3,2,1)`)
+- README.md "Decided questions" (primary-rank table: Straight = 1, Flush = 0;
+  Ace-low straight follows ADR-006)
+
+**Scope**
+
+- In scope: Straight and Flush classification, their tiebreaker keys,
+  reason/kicker population, and output strings, including the Ace-low straight.
+- Out of scope: Straight Flush and Royal Flush (GAME-STORY-005). No hand in
+  this bundle's scenarios is both a straight and a flush.
+
+**Tiebreaker keys for this story:**
+
+Both Straight and Flush use a five-element descending-rank key.
+
+- Straight: `(r5, r4, r3, r2, r1)` descending. ADR-006 defines the wheel key
+  as `(5, 4, 3, 2, 1)` (Ace treated as 1). All straight keys use the same
+  five-element shape so that any two straight keys compare uniformly. Ch 12
+  confirms the straight is "Ranked by the highest card", which is the first
+  element of the key.
+- Flush: `(r5, r4, r3, r2, r1)` descending, identical structure to High Card
+  per Ch 4.4 and Ch 12 ("Ranked using High Card rules").
+
+Primary ranks: Straight = 1 (the high card), Flush = 0 (every card is a
+kicker). Reason for a Straight win is `(high_card_rank,)`. Reason for a Flush
+win is the rank at the first difference, same as High Card.
+
+---
+
+### Acceptance scenarios (end to end, through the CLI)
+
+### SCENARIO 1: Straight beats Three of a Kind
+
+**Scenario ID**: GAME-STORY-004-S1
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: 4S 5H 6C 7D 8S  White: 9H 9D 9C KS 2H` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with straight: 8`
+
+### SCENARIO 2: Flush beats Straight
+
+**Scenario ID**: GAME-STORY-004-S2
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: 2H 8H JH QH AH  White: 3S 4D 5C 6H 7S` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with flush: Ace`
+
+### SCENARIO 3: Ace-low straight (wheel) beats a Pair
+
+**Scenario ID**: GAME-STORY-004-S3
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: AH 2D 3S 4C 5H  White: KC KH 7D 3D 9S` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with straight: 5`
+
+### SCENARIO 4: Wheel loses to the lowest regular straight (ADR-006)
+
+**Scenario ID**: GAME-STORY-004-S4
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: 2C 3D 4H 5S 6H  White: AH 2D 3S 4C 5H` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with straight: 6`
+
+### SCENARIO 5: Higher straight wins
+
+**Scenario ID**: GAME-STORY-004-S5
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: 9S TH JC QD KH  White: 4D 5H 6S 7C 8D` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with straight: King`
+
+### SCENARIO 6: Flush decided by second card
+
+**Scenario ID**: GAME-STORY-004-S6
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: AH 9H 6H 4H 2H  White: AD 8D 6D 4D 2D` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with flush: 9`
+
+### SCENARIO 7: Two equal straights are a tie (QS-3)
+
+**Scenario ID**: GAME-STORY-004-S7
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: 4S 5H 6C 7D 8S  White: 4D 5C 6H 7S 8H` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Tie.`
+
+### SCENARIO 8: Wrap-around K-A-2-3-4 is not a straight
+
+**Scenario ID**: GAME-STORY-004-S8
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: KH AD 2S 3C 4H  White: QS JD 9C 7H 5D` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with high card: Ace`
+
+### SCENARIO 9: Ace-high straight ranks Ace as the top card
+
+**Scenario ID**: GAME-STORY-004-S9
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: TS JH QC KD AH  White: 9D TC JS QH KS` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with straight: Ace`
+
+---
+
+### INFRA sub-stories
+
+#### GAME-INFRA-004.1: Straights and flushes acceptance feature file
+
+```
+AS A developer
+I WANT the GAME-STORY-004 scenarios in their own feature file
+SO THAT they run with the rest of the suite and appear separately in the test report
+```
+
+**Architecture references**: Ch 4.5 Testing strategy, Ch 8.5 Testability,
+OC-2, QS-5, Ch 7.3 CI runner (Artefacts)
+
+### SCENARIO 1: Straight and flush scenarios are collected alongside earlier ones
+
+**Scenario ID**: GAME-INFRA-004.1-S1
+
+**GIVEN**
+* `features/straights_and_flushes.feature` contains GAME-STORY-004-S1 to S9
+
+**WHEN**
+* `pytest` is run from the repository root
+
+**THEN**
+* the nine scenarios are collected and reported by their names
+* all earlier GAME-STORY scenarios still pass
+
+### SCENARIO 2: CI reports the new scenarios without workflow changes
+
+**Scenario ID**: GAME-INFRA-004.1-S2
+
+**GIVEN**
+* the CI workflow from GAME-INFRA-001.3
+
+**WHEN**
+* a commit adding `features/straights_and_flushes.feature` is pushed
+
+**THEN**
+* the workflow file is unchanged
+* the JUnit XML report contains GAME-STORY-004-S1 to S9
+
+#### Deployment, data store, events and monitoring: no new work
+
+All reused from GAME-STORY-001 (GAME-INFRA-001.1, 001.3, 001.4). Data store
+and events remain not applicable (Ch 1.2, ADR-001, Ch 3.1). No logging
+(Ch 8.6).
+
+---
+
+### BE sub-stories
+
+#### GAME-BE-004.1: Classify Straight with a tiebreaker key, including the wheel
+
+```
+AS A developer
+I WANT `rank_hand` to return STRAIGHT with a five-element descending key, using (5,4,3,2,1) for the wheel, and HIGH_CARD for wrap-around sequences
+SO THAT straights compare correctly and K-A-2-3-4 is not mistaken for a straight
+```
+
+**Architecture references**: Ch 5.3 `ranker`, Ch 8.1 STRAIGHT = 5,
+Ch 12 Glossary ("Ranked by the highest card"), ADR-003, ADR-006, QS-6, R-1
+
+### SCENARIO 1: Regular straight classified with correct key
+
+**Scenario ID**: GAME-BE-004.1-S1
+
+**GIVEN**
+* a `Hand` built directly with 4S 5H 6C 7D 8S (straight 4 to 8)
+
+**WHEN**
+* `rank_hand` is called
+
+**THEN**
+* `ranked.category == HandCategory.STRAIGHT`
+* `ranked.tiebreaker_key == (8, 7, 6, 5, 4)`
+
+### SCENARIO 2: Ace-low straight classified with key (5,4,3,2,1)
+
+**Scenario ID**: GAME-BE-004.1-S2
+
+**GIVEN**
+* a `Hand` built directly with AH 2D 3S 4C 5H (ranks `[14, 2, 3, 4, 5]`, detected as wheel per ADR-006)
+
+**WHEN**
+* `rank_hand` is called
+
+**THEN**
+* `ranked.category == HandCategory.STRAIGHT`
+* `ranked.tiebreaker_key == (5, 4, 3, 2, 1)`
+
+### SCENARIO 3: Wrap-around K-A-2-3-4 is classified as High Card, not a Straight
+
+**Scenario ID**: GAME-BE-004.1-S3
+
+**GIVEN**
+* a `Hand` built directly with KH AD 2S 3C 4H (ranks sorted: `[2, 3, 4, 13, 14]`)
+
+**WHEN**
+* `rank_hand` is called
+
+**THEN**
+* `ranked.category == HandCategory.HIGH_CARD`
+* `ranked.tiebreaker_key == (14, 13, 4, 3, 2)`
+
+### SCENARIO 4: Ace-high straight classified with Ace as the high card
+
+**Scenario ID**: GAME-BE-004.1-S4
+
+**GIVEN**
+* a `Hand` built directly with TS JH QC KD AH (ranks `[10, 11, 12, 13, 14]`)
+
+**WHEN**
+* `rank_hand` is called
+
+**THEN**
+* `ranked.category == HandCategory.STRAIGHT`
+* `ranked.tiebreaker_key == (14, 13, 12, 11, 10)`
+
+---
+
+#### GAME-BE-004.2: Classify Flush with a tiebreaker key
+
+```
+AS A developer
+I WANT `rank_hand` to return FLUSH with a five-element descending key
+SO THAT flushes compare correctly with one tuple comparison, using the same logic as High Card
+```
+
+**Architecture references**: Ch 4.4 Tiebreaker key (High Card / Flush key),
+Ch 5.3 `ranker`, Ch 8.1 FLUSH = 6, Ch 12 Glossary, ADR-003, QS-6
+
+### SCENARIO 1: Flush classified with correct key
+
+**Scenario ID**: GAME-BE-004.2-S1
+
+**GIVEN**
+* a `Hand` built directly with 2H 4H 8H JH AH (all Hearts, non-consecutive)
+
+**WHEN**
+* `rank_hand` is called
+
+**THEN**
+* `ranked.category == HandCategory.FLUSH`
+* `ranked.tiebreaker_key == (14, 11, 8, 4, 2)`
+
+### SCENARIO 2: Card order in input does not affect the key
+
+**Scenario ID**: GAME-BE-004.2-S2
+
+**GIVEN**
+* the same five cards as GAME-BE-004.2-S1 in the order AH 2H JH 8H 4H
+
+**WHEN**
+* `rank_hand` is called
+
+**THEN**
+* `ranked.tiebreaker_key == (14, 11, 8, 4, 2)`
+
+---
+
+#### GAME-BE-004.3: Primary-rank table extended for Straight and Flush
+
+```
+AS A developer
+I WANT the primary-rank table in `ranker` to include entries for Straight and Flush
+SO THAT the comparator correctly identifies the reason and kicker for these categories
+```
+
+**Architecture references**: Ch 4.4 Tiebreaker key, Ch 5.3 `ranker`,
+README.md "Which rank(s) the reason shows"
+
+### SCENARIO 1: Table entries for Straight and Flush are correct
+
+**Scenario ID**: GAME-BE-004.3-S1
+
+**GIVEN**
+* the primary-rank table in `ranker`
+
+**WHEN**
+* it is read for STRAIGHT and FLUSH
+
+**THEN**
+* STRAIGHT maps to 1
+* FLUSH maps to 0
+
+---
+
+#### GAME-BE-004.4: Comparator resolves Straight and Flush results
+
+```
+AS A developer
+I WANT `compare` to populate `result.reason` and `result.kicker` correctly for Straight and Flush
+SO THAT the formatter produces the exact output string without poker knowledge
+```
+
+**Architecture references**: Ch 5.3 `comparator`, Ch 8.1 `Result`, ADR-002,
+ADR-003, Ch 4.4, ADR-006, README.md "Decided questions"
+
+### SCENARIO 1: Straight beats Three of a Kind, reason is the high card
+
+**Scenario ID**: GAME-BE-004.4-S1
+
+**GIVEN**
+* Black is STRAIGHT with key `(8, 7, 6, 5, 4)`
+  (valid input: `Black: 4S 5H 6C 7D 8S  White: 9H 9D 9C KS 2H`)
+* White is THREE_OF_A_KIND with key `(9,)`
+
+**WHEN**
+* `compare(black, white)` is called
+
+**THEN**
+* `result.winner == "Black"`
+* `result.category == HandCategory.STRAIGHT`
+* `result.reason == (Rank.EIGHT,)`
+* `result.kicker is None`
+
+### SCENARIO 2: Wheel beats Pair, reason is 5 (high card of the wheel)
+
+**Scenario ID**: GAME-BE-004.4-S2
+
+**GIVEN**
+* Black is STRAIGHT with key `(5, 4, 3, 2, 1)`
+  (valid input: `Black: AH 2D 3S 4C 5H  White: KC KH 7D 3D 9S`)
+* White is PAIR with key `(13, 9, 7, 3)`
+
+**WHEN**
+* `compare(black, white)` is called
+
+**THEN**
+* `result.winner == "Black"`
+* `result.category == HandCategory.STRAIGHT`
+* `result.reason == (Rank.FIVE,)`
+* `result.kicker is None`
+
+### SCENARIO 3: Flush beats Straight, reason is the flush's highest card
+
+**Scenario ID**: GAME-BE-004.4-S3
+
+**GIVEN**
+* Black is FLUSH with key `(14, 12, 11, 8, 2)`
+  (valid input: `Black: 2H 8H JH QH AH  White: 3S 4D 5C 6H 7S`)
+* White is STRAIGHT with key `(7, 6, 5, 4, 3)`
+
+**WHEN**
+* `compare(black, white)` is called
+
+**THEN**
+* `result.winner == "Black"`
+* `result.category == HandCategory.FLUSH`
+* `result.reason == (Rank.ACE,)`
+* `result.kicker is None`
+
+### SCENARIO 4: Flush decided by second card, reason is that card
+
+**Scenario ID**: GAME-BE-004.4-S4
+
+**GIVEN**
+* Black is FLUSH with key `(14, 9, 6, 4, 2)`
+  (valid input: `Black: AH 9H 6H 4H 2H  White: AD 8D 6D 4D 2D`)
+* White is FLUSH with key `(14, 8, 6, 4, 2)`
+
+**WHEN**
+* `compare(black, white)` is called
+
+**THEN**
+* `result.winner == "Black"`
+* `result.category == HandCategory.FLUSH`
+* `result.reason == (Rank.NINE,)`
+* `result.kicker is None`
+
+### SCENARIO 5: Identical flush hands are a tie
+
+**Scenario ID**: GAME-BE-004.4-S5
+
+**GIVEN**
+* Black is FLUSH with key `(14, 9, 6, 4, 2)`
+  (valid input: `Black: AH 9H 6H 4H 2H  White: AS 9S 6S 4S 2S`)
+* White is FLUSH with key `(14, 9, 6, 4, 2)`
+
+**WHEN**
+* `compare(black, white)` is called
+
+**THEN**
+* `result.is_tie == True`
+* `result.winner` is absent or None
+
+---
+
+### FE sub-stories
+
+#### GAME-FE-004.1: Format Straight and Flush verdicts
+
+```
+AS A player
+I WANT Straight and Flush results formatted in the kata's wording
+SO THAT I can read the decisive rank at a glance
+```
+
+**Architecture references**: Ch 3.3 Poker Hands to Player, Ch 5.3 `formatter`,
+Ch 1.2 FR-4, TD-3, README.md "Decided questions" (Ten displays as "10",
+face cards spelled out)
+
+### SCENARIO 1: Straight with a face card high
+
+**Scenario ID**: GAME-FE-004.1-S1
+
+**GIVEN**
+* a Result with winner "Black", category STRAIGHT, reason `(Rank.KING,)`, kicker `None`
+  (produced by `Black: 9S TH JC QD KH  White: 4D 5H 6S 7C 8D`)
+
+**WHEN**
+* `format_result` is called
+
+**THEN**
+* it returns `Black wins. - with straight: King`
+
+### SCENARIO 2: Straight with a number high card (wheel)
+
+**Scenario ID**: GAME-FE-004.1-S2
+
+**GIVEN**
+* a Result with winner "Black", category STRAIGHT, reason `(Rank.FIVE,)`, kicker `None`
+  (produced by `Black: AH 2D 3S 4C 5H  White: KC KH 7D 3D 9S`)
+
+**WHEN**
+* `format_result` is called
+
+**THEN**
+* it returns `Black wins. - with straight: 5`
+
+### SCENARIO 3: Flush with an Ace high
+
+**Scenario ID**: GAME-FE-004.1-S3
+
+**GIVEN**
+* a Result with winner "Black", category FLUSH, reason `(Rank.ACE,)`, kicker `None`
+  (produced by `Black: 2H 8H JH QH AH  White: 3S 4D 5C 6H 7S`)
+
+**WHEN**
+* `format_result` is called
+
+**THEN**
+* it returns `Black wins. - with flush: Ace`
+
+### SCENARIO 4: Flush decided by a mid-rank card
+
+**Scenario ID**: GAME-FE-004.1-S4
+
+**GIVEN**
+* a Result with winner "Black", category FLUSH, reason `(Rank.NINE,)`, kicker `None`
+  (produced by `Black: AH 9H 6H 4H 2H  White: AD 8D 6D 4D 2D`)
+
+**WHEN**
+* `format_result` is called
+
+**THEN**
+* it returns `Black wins. - with flush: 9`
+
+---
+
+### Implementation order
+
+1. GAME-INFRA-004.1: add `features/straights_and_flushes.feature`
+2. GAME-BE-004.1: extend `ranker` to classify Straight, detect the wheel, and reject wrap-arounds
+3. GAME-BE-004.2: extend `ranker` to classify Flush
+4. GAME-BE-004.3: extend the primary-rank table in `ranker`
+5. GAME-BE-004.4: extend `comparator` for Straight and Flush
+6. GAME-FE-004.1: extend `formatter` for Straight and Flush
+7. GAME-STORY-004-S1 to S9 end to end, plus earlier stories as regression
+
+---
+
+### Traceability check
+
+| Scenario | Parent | Architecture | Checks (THEN) |
+|---|---|---|---|
+| GAME-STORY-004-S1 | GAME-STORY-004 | Ch 1.2 FR-2, FR-4 | exact output line |
+| GAME-STORY-004-S2 | GAME-STORY-004 | Ch 1.2 FR-2, FR-4 | exact output line |
+| GAME-STORY-004-S3 | GAME-STORY-004 | ADR-006, FR-2, FR-4 | exact output line |
+| GAME-STORY-004-S4 | GAME-STORY-004 | ADR-006, R-1 | exact output line |
+| GAME-STORY-004-S5 | GAME-STORY-004 | Ch 12 | exact output line |
+| GAME-STORY-004-S6 | GAME-STORY-004 | Ch 4.4, R-1 | exact output line |
+| GAME-STORY-004-S7 | GAME-STORY-004 | QS-3 | exact output line `Tie.` |
+| GAME-STORY-004-S8 | GAME-STORY-004 | ADR-006, R-1 | exact output line; Ace wins as high card |
+| GAME-STORY-004-S9 | GAME-STORY-004 | Ch 12, ADR-006 | exact output line; Ace is high not low |
+| GAME-INFRA-004.1-S1 | GAME-INFRA-004.1 | Ch 8.5, OC-2 | scenarios collected; earlier pass |
+| GAME-INFRA-004.1-S2 | GAME-INFRA-004.1 | Ch 7.3 | workflow unchanged; IDs in report |
+| GAME-BE-004.1-S1 | GAME-BE-004.1 | Ch 12, Ch 8.1 | STRAIGHT; key (8,7,6,5,4) |
+| GAME-BE-004.1-S2 | GAME-BE-004.1 | ADR-006, Ch 8.1 | STRAIGHT; key (5,4,3,2,1) |
+| GAME-BE-004.1-S3 | GAME-BE-004.1 | ADR-006, R-1 | HIGH_CARD; key (14,13,4,3,2) |
+| GAME-BE-004.1-S4 | GAME-BE-004.1 | Ch 12, ADR-006 | STRAIGHT; key (14,13,12,11,10) |
+| GAME-BE-004.2-S1 | GAME-BE-004.2 | Ch 4.4, Ch 8.1 | FLUSH; key (14,11,8,4,2) |
+| GAME-BE-004.2-S2 | GAME-BE-004.2 | Ch 4.4, QS-6 | same key regardless of card order |
+| GAME-BE-004.3-S1 | GAME-BE-004.3 | Ch 4.4, Ch 5.3 ranker | STRAIGHT=1, FLUSH=0 |
+| GAME-BE-004.4-S1 | GAME-BE-004.4 | Ch 5.3, ADR-002 | winner; reason (EIGHT,); kicker None |
+| GAME-BE-004.4-S2 | GAME-BE-004.4 | ADR-006, ADR-002 | winner; reason (FIVE,); kicker None |
+| GAME-BE-004.4-S3 | GAME-BE-004.4 | Ch 5.3, ADR-002 | winner; reason (ACE,); kicker None |
+| GAME-BE-004.4-S4 | GAME-BE-004.4 | Ch 4.4, R-1 | winner; reason (NINE,); kicker None |
+| GAME-BE-004.4-S5 | GAME-BE-004.4 | QS-3 | is_tie True; no winner |
+| GAME-FE-004.1-S1 | GAME-FE-004.1 | Ch 3.3, FR-4 | `Black wins. - with straight: King` |
+| GAME-FE-004.1-S2 | GAME-FE-004.1 | Ch 3.3, FR-4, ADR-006 | `Black wins. - with straight: 5` |
+| GAME-FE-004.1-S3 | GAME-FE-004.1 | Ch 3.3, FR-4 | `Black wins. - with flush: Ace` |
+| GAME-FE-004.1-S4 | GAME-FE-004.1 | Ch 3.3, FR-4 | `Black wins. - with flush: 9` |
+
+---
+
+## GAME-STORY-005: Straight flushes and royal flush
+
+**Priority**: Supporting
+**Value**: Straight Flush and Royal Flush together decide less than 0.01% of all
+random games (0.0028% + 0.0003%). Settles the Royal Flush output format and
+the detection-order rule from ADR-004.
+**Status**: Approved, not implemented
+
+```
+AS A player
+I WANT to enter two hands where at least one contains a straight flush or a royal flush and be told who wins and why
+SO THAT the rarest and highest hands are recognised and reported correctly
+```
+
+**Architecture references**
+
+- Ch 1.2 FR-2 (Straight Flush, Royal Flush), FR-3, FR-4
+- Ch 5.3 `ranker` (detection order: Royal Flush checked before Straight Flush),
+  `comparator`, `formatter`
+- Ch 8.1 `HandCategory` STRAIGHT_FLUSH = 9, ROYAL_FLUSH = 10
+- Ch 10.2 QS-2 (Royal Flush not misclassified as Straight Flush), QS-3 (tie)
+- Ch 11.1 R-2 (Royal Flush misclassified as Straight Flush if detection order wrong)
+- Ch 12 Glossary (Straight Flush: "Five consecutive ranks all of the same suit,
+  other than 10-J-Q-K-A ... Includes the Ace-low A-2-3-4-5 of one suit"; Royal Flush:
+  "A Straight Flush with ranks 10-J-Q-K-A. The highest possible hand; two Royal
+  Flushes are always a tie.")
+- ADR-003 (IntEnum and tuple comparison)
+- ADR-004 (Royal Flush as a distinct category, `ROYAL_FLUSH = 10`, key `()`,
+  detection order)
+- README.md "Decided questions" (primary-rank table: Straight Flush = 1,
+  Royal Flush = 0; Royal Flush output format settled here)
+
+**Scope**
+
+- In scope: Straight Flush and Royal Flush classification, detection order,
+  tiebreaker keys, reason population, and output strings. This includes the
+  suited wheel (A-2-3-4-5 of one suit), which is the lowest Straight Flush
+  with key `(5, 4, 3, 2, 1)` per ADR-006. The ranker detects the suited wheel
+  the same way as the unsuited wheel but, finding all five cards in the same
+  suit, classifies it as STRAIGHT_FLUSH rather than STRAIGHT.
+- Out of scope: classifying unsuited straights and plain flushes
+  (GAME-STORY-004). S1 deliberately has a plain Flush on the losing side,
+  which GAME-STORY-004 already classifies.
+- Ch 12 defines a Straight Flush as any same-suit straight other than
+  10-J-Q-K-A, explicitly including the suited wheel (ADR-006). The 36
+  Straight Flushes in the README Pareto table include the 4 suited wheels.
+
+**Tiebreaker keys:**
+- Straight Flush: same five-element descending key as Straight, `(r5,r4,r3,r2,r1)`.
+  Ch 12 "Ranked by the highest card"; all straight-family keys share the same shape.
+  The suited wheel uses `(5, 4, 3, 2, 1)`, as in ADR-006.
+- Royal Flush: `()` empty tuple per ADR-004. Two Royal Flushes are always a tie.
+
+**Royal Flush output format (decided here):** `Result.reason` is `()` for a
+Royal Flush. The formatter omits the colon and reason entirely:
+`<Name> wins. - with royal flush`. This is recorded in the README decided
+questions and must be used in all future references to Royal Flush output.
+
+---
+
+### Acceptance scenarios (end to end, through the CLI)
+
+### SCENARIO 1: Straight Flush beats Flush
+
+**Scenario ID**: GAME-STORY-005-S1
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: 5H 6H 7H 8H 9H  White: 2D 5D 8D JD KD` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with straight flush: 9`
+
+### SCENARIO 2: Royal Flush beats Straight Flush (QS-2)
+
+**Scenario ID**: GAME-STORY-005-S2
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: TH JH QH KH AH  White: 9S TS JS QS KS` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with royal flush`
+
+### SCENARIO 3: Higher Straight Flush wins
+
+**Scenario ID**: GAME-STORY-005-S3
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: 9H TH JH QH KH  White: 4D 5D 6D 7D 8D` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with straight flush: King`
+
+### SCENARIO 4: Two Royal Flushes are a tie (QS-3)
+
+**Scenario ID**: GAME-STORY-005-S4
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: TH JH QH KH AH  White: TC JC QC KC AC` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Tie.`
+
+### SCENARIO 5: Two equal Straight Flushes are a tie (QS-3)
+
+**Scenario ID**: GAME-STORY-005-S5
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: 5H 6H 7H 8H 9H  White: 5D 6D 7D 8D 9D` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Tie.`
+
+### SCENARIO 6: Suited wheel beats Four of a Kind
+
+**Scenario ID**: GAME-STORY-005-S6
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: AH 2H 3H 4H 5H  White: 9S 9D 9C 9H KD` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with straight flush: 5`
+
+### SCENARIO 7: Suited wheel is the lowest Straight Flush
+
+**Scenario ID**: GAME-STORY-005-S7
+
+**GIVEN**
+* the program is started with `python3 -m poker_hands`
+
+**WHEN**
+* the line `Black: 2D 3D 4D 5D 6D  White: AH 2H 3H 4H 5H` is sent on stdin
+
+**THEN**
+* stdout contains exactly `Black wins. - with straight flush: 6`
+
+---
+
+### INFRA sub-stories
+
+#### GAME-INFRA-005.1: Straight flushes and royal flush acceptance feature file
+
+```
+AS A developer
+I WANT the GAME-STORY-005 scenarios in their own feature file
+SO THAT they run with the rest of the suite and appear separately in the test report
+```
+
+**Architecture references**: Ch 4.5 Testing strategy, Ch 8.5 Testability,
+OC-2, QS-5, Ch 7.3 CI runner (Artefacts)
+
+### SCENARIO 1: Straight flush and royal flush scenarios are collected alongside earlier ones
+
+**Scenario ID**: GAME-INFRA-005.1-S1
+
+**GIVEN**
+* `features/straight_flushes.feature` contains GAME-STORY-005-S1 to S7
+
+**WHEN**
+* `pytest` is run from the repository root
+
+**THEN**
+* the seven scenarios are collected and reported by their names
+* all earlier GAME-STORY scenarios still pass
+
+### SCENARIO 2: CI reports the new scenarios without workflow changes
+
+**Scenario ID**: GAME-INFRA-005.1-S2
+
+**GIVEN**
+* the CI workflow from GAME-INFRA-001.3
+
+**WHEN**
+* a commit adding `features/straight_flushes.feature` is pushed
+
+**THEN**
+* the workflow file is unchanged
+* the JUnit XML report contains GAME-STORY-005-S1 to S7
+
+#### Deployment, data store, events and monitoring: no new work
+
+All reused from GAME-STORY-001 (GAME-INFRA-001.1, 001.3, 001.4). Data store
+and events remain not applicable (Ch 1.2, ADR-001, Ch 3.1). No logging
+(Ch 8.6).
+
+---
+
+### BE sub-stories
+
+#### GAME-BE-005.1: Classify Straight Flush and Royal Flush, with correct detection order
+
+```
+AS A developer
+I WANT `rank_hand` to return ROYAL_FLUSH for 10-J-Q-K-A of a suit and STRAIGHT_FLUSH for all other same-suit straights, including the suited wheel, checking Royal Flush first
+SO THAT a Royal Flush is never misclassified as a Straight Flush (ADR-004, R-2)
+```
+
+**Architecture references**: Ch 5.3 `ranker`, Ch 8.1 STRAIGHT_FLUSH = 9,
+ROYAL_FLUSH = 10, Ch 12 Glossary, ADR-003, ADR-004, ADR-006, QS-2, R-2
+
+### SCENARIO 1: Straight Flush classified with correct key
+
+**Scenario ID**: GAME-BE-005.1-S1
+
+**GIVEN**
+* a `Hand` built directly with 5H 6H 7H 8H 9H (all Hearts, consecutive 5-9)
+
+**WHEN**
+* `rank_hand` is called
+
+**THEN**
+* `ranked.category == HandCategory.STRAIGHT_FLUSH`
+* `ranked.tiebreaker_key == (9, 8, 7, 6, 5)`
+
+### SCENARIO 2: Royal Flush classified with empty key, not Straight Flush (QS-2)
+
+**Scenario ID**: GAME-BE-005.1-S2
+
+**GIVEN**
+* a `Hand` built directly with TH JH QH KH AH (all Hearts, 10-J-Q-K-A)
+
+**WHEN**
+* `rank_hand` is called
+
+**THEN**
+* `ranked.category == HandCategory.ROYAL_FLUSH`
+* `ranked.tiebreaker_key == ()`
+
+### SCENARIO 3: King-high same-suit straight is Straight Flush, not Royal Flush
+
+**Scenario ID**: GAME-BE-005.1-S3
+
+**GIVEN**
+* a `Hand` built directly with 9H TH JH QH KH (all Hearts, 9-10-J-Q-K)
+
+**WHEN**
+* `rank_hand` is called
+
+**THEN**
+* `ranked.category == HandCategory.STRAIGHT_FLUSH`
+* `ranked.tiebreaker_key == (13, 12, 11, 10, 9)`
+
+### SCENARIO 4: Suited wheel is a Straight Flush with key (5,4,3,2,1)
+
+**Scenario ID**: GAME-BE-005.1-S4
+
+**GIVEN**
+* a `Hand` built directly with AH 2H 3H 4H 5H (all Hearts, A-2-3-4-5)
+
+**WHEN**
+* `rank_hand` is called
+
+**THEN**
+* `ranked.category == HandCategory.STRAIGHT_FLUSH`
+* `ranked.tiebreaker_key == (5, 4, 3, 2, 1)`
+
+---
+
+#### GAME-BE-005.2: Primary-rank table extended for Straight Flush and Royal Flush
+
+```
+AS A developer
+I WANT the primary-rank table in `ranker` to include entries for Straight Flush and Royal Flush
+SO THAT the comparator correctly identifies the reason for these categories
+```
+
+**Architecture references**: Ch 4.4 Tiebreaker key, Ch 5.3 `ranker`,
+ADR-004, README.md "Which rank(s) the reason shows"
+
+### SCENARIO 1: Table entries for Straight Flush and Royal Flush are correct
+
+**Scenario ID**: GAME-BE-005.2-S1
+
+**GIVEN**
+* the primary-rank table in `ranker`
+
+**WHEN**
+* it is read for STRAIGHT_FLUSH and ROYAL_FLUSH
+
+**THEN**
+* STRAIGHT_FLUSH maps to 1
+* ROYAL_FLUSH maps to 0
+
+---
+
+#### GAME-BE-005.3: Comparator resolves Straight Flush and Royal Flush results
+
+```
+AS A developer
+I WANT `compare` to populate `result.reason` and `result.kicker` correctly for Straight Flush and Royal Flush
+SO THAT the formatter produces the exact output string without poker knowledge
+```
+
+**Architecture references**: Ch 5.3 `comparator`, Ch 8.1 `Result`, ADR-002,
+ADR-003, ADR-004, README.md "Decided questions"
+
+### SCENARIO 1: Straight Flush beats Flush, reason is the high card
+
+**Scenario ID**: GAME-BE-005.3-S1
+
+**GIVEN**
+* Black is STRAIGHT_FLUSH with key `(9, 8, 7, 6, 5)`
+  (valid input: `Black: 5H 6H 7H 8H 9H  White: 2D 5D 8D JD KD`)
+* White is FLUSH with key `(13, 11, 8, 5, 2)`
+
+**WHEN**
+* `compare(black, white)` is called
+
+**THEN**
+* `result.winner == "Black"`
+* `result.category == HandCategory.STRAIGHT_FLUSH`
+* `result.reason == (Rank.NINE,)`
+* `result.kicker is None`
+
+### SCENARIO 2: Royal Flush beats Straight Flush, reason is empty
+
+**Scenario ID**: GAME-BE-005.3-S2
+
+**GIVEN**
+* Black is ROYAL_FLUSH with key `()`
+  (valid input: `Black: TH JH QH KH AH  White: 9S TS JS QS KS`)
+* White is STRAIGHT_FLUSH with key `(13, 12, 11, 10, 9)`
+
+**WHEN**
+* `compare(black, white)` is called
+
+**THEN**
+* `result.winner == "Black"`
+* `result.category == HandCategory.ROYAL_FLUSH`
+* `result.reason == ()`
+* `result.kicker is None`
+
+### SCENARIO 3: Two Royal Flushes are a tie
+
+**Scenario ID**: GAME-BE-005.3-S3
+
+**GIVEN**
+* Black is ROYAL_FLUSH with key `()`
+  (valid input: `Black: TH JH QH KH AH  White: TC JC QC KC AC`)
+* White is ROYAL_FLUSH with key `()`
+
+**WHEN**
+* `compare(black, white)` is called
+
+**THEN**
+* `result.is_tie == True`
+* `result.winner` is absent or None
+
+### SCENARIO 4: Suited wheel beats Four of a Kind, reason is 5
+
+**Scenario ID**: GAME-BE-005.3-S4
+
+**GIVEN**
+* Black is STRAIGHT_FLUSH with key `(5, 4, 3, 2, 1)`
+  (valid input: `Black: AH 2H 3H 4H 5H  White: 9S 9D 9C 9H KD`)
+* White is FOUR_OF_A_KIND with key `(9,)`
+
+**WHEN**
+* `compare(black, white)` is called
+
+**THEN**
+* `result.winner == "Black"`
+* `result.category == HandCategory.STRAIGHT_FLUSH`
+* `result.reason == (Rank.FIVE,)`
+* `result.kicker is None`
+
+---
+
+### FE sub-stories
+
+#### GAME-FE-005.1: Format Straight Flush and Royal Flush verdicts
+
+```
+AS A player
+I WANT Straight Flush and Royal Flush results formatted in the kata's wording
+SO THAT the highest hands are reported clearly, with no spurious reason for a Royal Flush
+```
+
+**Architecture references**: Ch 3.3 Poker Hands to Player, Ch 5.3 `formatter`,
+Ch 1.2 FR-4, ADR-004, TD-3, README.md "Decided questions" (Royal Flush output
+format: no colon or reason; face cards and Ten spelled out per existing rules)
+
+### SCENARIO 1: Straight Flush with a number high card
+
+**Scenario ID**: GAME-FE-005.1-S1
+
+**GIVEN**
+* a Result with winner "Black", category STRAIGHT_FLUSH, reason `(Rank.NINE,)`, kicker `None`
+  (produced by `Black: 5H 6H 7H 8H 9H  White: 2D 5D 8D JD KD`)
+
+**WHEN**
+* `format_result` is called
+
+**THEN**
+* it returns `Black wins. - with straight flush: 9`
+
+### SCENARIO 2: Straight Flush with a face card high
+
+**Scenario ID**: GAME-FE-005.1-S2
+
+**GIVEN**
+* a Result with winner "Black", category STRAIGHT_FLUSH, reason `(Rank.KING,)`, kicker `None`
+  (produced by `Black: 9H TH JH QH KH  White: 4D 5D 6D 7D 8D`)
+
+**WHEN**
+* `format_result` is called
+
+**THEN**
+* it returns `Black wins. - with straight flush: King`
+
+### SCENARIO 3: Royal Flush produces no reason after the category
+
+**Scenario ID**: GAME-FE-005.1-S3
+
+**GIVEN**
+* a Result with winner "Black", category ROYAL_FLUSH, reason `()`, kicker `None`
+  (produced by `Black: TH JH QH KH AH  White: 9S TS JS QS KS`)
+
+**WHEN**
+* `format_result` is called
+
+**THEN**
+* it returns `Black wins. - with royal flush`
+
+---
+
+### Implementation order
+
+1. GAME-INFRA-005.1: add `features/straight_flushes.feature`
+2. GAME-BE-005.1: extend `ranker` to classify Straight Flush and Royal Flush, Royal Flush checked first
+3. GAME-BE-005.2: extend the primary-rank table in `ranker`
+4. GAME-BE-005.3: extend `comparator` for Straight Flush and Royal Flush
+5. GAME-FE-005.1: extend `formatter` for Straight Flush and Royal Flush
+6. GAME-STORY-005-S1 to S7 end to end, plus earlier stories as regression
+
+---
+
+### Traceability check
+
+| Scenario | Parent | Architecture | Checks (THEN) |
+|---|---|---|---|
+| GAME-STORY-005-S1 | GAME-STORY-005 | Ch 1.2 FR-2, FR-4 | exact output line |
+| GAME-STORY-005-S2 | GAME-STORY-005 | QS-2, ADR-004 | exact output line; royal flush label |
+| GAME-STORY-005-S3 | GAME-STORY-005 | Ch 12, R-2 | exact output line |
+| GAME-STORY-005-S4 | GAME-STORY-005 | QS-3, ADR-004 | exact output line `Tie.` |
+| GAME-STORY-005-S5 | GAME-STORY-005 | QS-3 | exact output line `Tie.` |
+| GAME-STORY-005-S6 | GAME-STORY-005 | ADR-006, Ch 12 | exact output line |
+| GAME-STORY-005-S7 | GAME-STORY-005 | ADR-006 | exact output line |
+| GAME-INFRA-005.1-S1 | GAME-INFRA-005.1 | Ch 8.5, OC-2 | scenarios collected; earlier pass |
+| GAME-INFRA-005.1-S2 | GAME-INFRA-005.1 | Ch 7.3 | workflow unchanged; IDs in report |
+| GAME-BE-005.1-S1 | GAME-BE-005.1 | Ch 12, Ch 8.1 | STRAIGHT_FLUSH; key (9,8,7,6,5) |
+| GAME-BE-005.1-S2 | GAME-BE-005.1 | ADR-004, QS-2 | ROYAL_FLUSH; key () |
+| GAME-BE-005.1-S3 | GAME-BE-005.1 | ADR-004, R-2 | STRAIGHT_FLUSH not ROYAL_FLUSH; key (13,12,11,10,9) |
+| GAME-BE-005.1-S4 | GAME-BE-005.1 | ADR-006 | STRAIGHT_FLUSH; key (5,4,3,2,1) |
+| GAME-BE-005.2-S1 | GAME-BE-005.2 | ADR-004, Ch 5.3 ranker | STRAIGHT_FLUSH=1, ROYAL_FLUSH=0 |
+| GAME-BE-005.3-S1 | GAME-BE-005.3 | Ch 5.3, ADR-002 | winner; reason (NINE,); kicker None |
+| GAME-BE-005.3-S2 | GAME-BE-005.3 | ADR-004, ADR-002 | winner; reason (); kicker None |
+| GAME-BE-005.3-S3 | GAME-BE-005.3 | QS-3, ADR-004 | is_tie True; no winner |
+| GAME-BE-005.3-S4 | GAME-BE-005.3 | ADR-006, ADR-002 | winner; reason (FIVE,); kicker None |
+| GAME-FE-005.1-S1 | GAME-FE-005.1 | Ch 3.3, FR-4 | `Black wins. - with straight flush: 9` |
+| GAME-FE-005.1-S2 | GAME-FE-005.1 | Ch 3.3, FR-4 | `Black wins. - with straight flush: King` |
+| GAME-FE-005.1-S3 | GAME-FE-005.1 | Ch 3.3, FR-4, ADR-004 | `Black wins. - with royal flush` |
