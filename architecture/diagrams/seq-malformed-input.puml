@@ -10,10 +10,10 @@ stdin -> cli : line = "Black: 2H 3D 5S  White: 2C 3H 4S 8C AH"
 
 cli -> parser : parse_line(line)
 parser -> parser : tokenise - Black hand yields only 3 cards
-parser -> parser : raise ValueError("Black hand must contain exactly 5 cards")
+parser -> parser : raise ValueError("Black hand must contain exactly 5 cards, got 3")
 parser --> cli : ValueError
 
 cli -> cli : catch ValueError
-cli -> stdout : "Error: invalid input – Black hand must contain exactly 5 cards."
+cli -> stdout : "Error: invalid input - Black hand must contain exactly 5 cards, got 3."
 
 @enduml
