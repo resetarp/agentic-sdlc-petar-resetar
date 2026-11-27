@@ -25,7 +25,7 @@ PlantUML source: [diagrams/c4-component-cli.puml](diagrams/c4-component-cli.puml
 
 | Attribute | Detail |
 |-----------|--------|
-| Responsibility | Defines `Card` (an immutable dataclass of `Rank` × `Suit`), `Rank` (`IntEnum`, 2–A), and `Suit` (`IntEnum`, C/D/H/S). |
+| Responsibility | Defines `Card` (an immutable dataclass of `Rank` × `Suit`), `Rank` (`IntEnum`, 2-A), and `Suit` (`IntEnum`, C/D/H/S). |
 | Public interface | `Card(rank: Rank, suit: Suit)` |
 | Dependencies | None |
 | Key design rule | `Rank` is `IntEnum` so `Rank.ACE > Rank.KING` is a plain `>` comparison. |
@@ -52,7 +52,7 @@ PlantUML source: [diagrams/c4-component-cli.puml](diagrams/c4-component-cli.puml
 
 | Attribute | Detail |
 |-----------|--------|
-| Responsibility | Classifies a `Hand` into a `RankedHand`: a `HandCategory` (IntEnum, 1–10) plus a tiebreaker key (tuple of ints). |
+| Responsibility | Classifies a `Hand` into a `RankedHand`: a `HandCategory` (IntEnum, 1-10) plus a tiebreaker key (tuple of ints). |
 | Public interface | `rank_hand(hand: Hand) -> RankedHand` |
 | Dependencies | `card`, `hand` |
 | Key design rule | Contains all poker rules. The tiebreaker key is constructed so that Python tuple comparison (`>`, `<`) resolves all ties without any special-case branching in the comparator. `ROYAL_FLUSH` is category 10 with an empty tiebreaker `()`. |

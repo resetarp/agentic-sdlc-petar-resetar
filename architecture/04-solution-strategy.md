@@ -70,7 +70,7 @@ The system is decomposed into five modules that form a linear pipeline:
 
 ### Value objects and IntEnum for domain types
 
-`Card` and `Hand` are immutable `dataclasses`. `Rank` (2–A) and `Suit` (C/D/H/S)
+`Card` and `Hand` are immutable `dataclasses`. `Rank` (2-A) and `Suit` (C/D/H/S)
 are `IntEnum`, so rank comparison is a plain `>` / `<`. `HandCategory` is also
 `IntEnum`, so category comparison is likewise a plain `>` / `<`.
 

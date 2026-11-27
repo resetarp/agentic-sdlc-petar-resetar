@@ -63,7 +63,7 @@ categories (e.g. Full House beats Flush) and between card ranks (e.g. Ace beats
 King). These comparisons must be correct, readable, and free of magic numbers.
 
 **Decision:**
-Represent `HandCategory` and `Rank` (2–14) as `IntEnum`. `HandCategory` assigns
+Represent `HandCategory` and `Rank` (2-14) as `IntEnum`. `HandCategory` assigns
 one integer per category in rank order: `HIGH_CARD = 1` through `ROYAL_FLUSH = 10`.
 Tiebreakers are expressed as tuples of integers so that Python's built-in tuple
 comparison resolves all ties without special-case branching.
@@ -79,7 +79,7 @@ comparison resolves all ties without special-case branching.
   - *Custom `__lt__` on a dataclass*: more code, same result.
 
 **Consequences:**
-- `HandCategory` values run 1–10 in strict rank order and must never change
+- `HandCategory` values run 1-10 in strict rank order and must never change
   once agreed (changing an integer breaks comparisons silently).
 - `ROYAL_FLUSH = 10` with an empty tiebreaker `()` means two Royal Flushes are
   always a tie, which is correct.
