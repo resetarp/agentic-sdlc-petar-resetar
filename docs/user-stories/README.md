@@ -87,12 +87,12 @@ in the core because Pair alone decides 60.2% of games.
 **Kata sample coverage (QS-1):** samples 1, 3 and 4 are covered by
 GAME-STORY-001 (S1, S2, S3). Sample 2
 (`Black: 2H 4S 4C 2D 4H  White: 2S 8S AS QS 3S` -> `Black wins. - with full house: 4 over 2`)
-is a Full House, so GAME-STORY-003 must include it as an acceptance scenario.
+is a Full House and is covered by GAME-STORY-003-S1. All four samples are covered.
 
 **Duplicate cards (INPUT-STORY-001):** Ch 8.2 and 8.3 rule 4 reject a card
 that appears twice anywhere on the input line, within one hand or across both
-hands (single 52-card deck). INPUT-STORY-001 must include an acceptance
-scenario for each case, for example:
+hands (single 52-card deck). INPUT-STORY-001 covers both cases
+(INPUT-STORY-001-S5 and S6):
 - within a hand: `Black: 2H 4S 4C 3D 4S  White: 2C 3H 4H 8C AH` (4S twice in Black's hand)
 - across hands: `Black: 2H 3D 5S 9C KD  White: 2C 3H 4S 8C KD` (KD in both hands)
 
@@ -115,7 +115,7 @@ must continue with the next line (Ch 8.2).
   | Royal Flush | 0 (empty key) |
 
   `Result` carries two fields for this, both as `Rank` values (no text):
-  - `reason`: the winner's primary ranks. For a category with 0 primary ranks, it is the winner's rank at the first difference, or the winner's highest card when the categories differ.
+  - `reason`: the winner's primary ranks. For a category with 0 primary ranks, it is the winner's rank at the first difference, or the winner's highest card when the categories differ. Exception: a Royal Flush has an empty key, so its reason is always `()`.
   - `kicker`: the winner's rank at the first difference when that difference falls after the primary ranks; otherwise `None`. Always `None` for categories with 0 primary ranks, because their deciding card is already the reason.
 
   The comparator applies one rule:
@@ -123,7 +123,7 @@ must continue with the next line (Ch 8.2).
   2. Categories differ, or the first difference falls inside the primary ranks: `reason` as above, `kicker = None`.
   3. Otherwise (decided by a kicker): `reason` as above, `kicker` = the winner's rank at the first difference.
 
-  The formatter writes `<category>: <reason>`, then `, high card: <kicker>` when `kicker` is set.
+  The formatter writes `<category>: <reason>`, then `, high card: <kicker>` when `kicker` is set. For a Royal Flush it writes only `royal flush`, with no colon.
 
   Examples:
   - Full House beats Flush (kata sample 2): reason `(Rank.FOUR, Rank.TWO)`, kicker `None` -> `Black wins. - with full house: 4 over 2`
@@ -132,27 +132,25 @@ must continue with the next line (Ch 8.2).
   - High Card decided by the second card (kata sample 3): reason `(Rank.NINE,)`, kicker `None` -> `Black wins. - with high card: 9`
 
   The primary-rank table lives in `ranker` next to the key definitions, because it describes the key layout (Ch 4.4). The comparator only reads it, so it holds no poker rules of its own (Ch 5.3).
-  GAME-STORY-002 settles the Two Pairs wording: two primary ranks are written as `<high> and <low>`, e.g. `two pairs: Jack and 8` (see GAME-FE-002.1-S3). Full House uses "over" (three over pair); Two Pairs uses "and". GAME-STORY-003 must include a scenario decided by primary ranks. The wording for Royal Flush (empty reason) is settled in GAME-STORY-005.
+  GAME-STORY-002 settles the Two Pairs wording: two primary ranks are written as `<high> and <low>`, e.g. `two pairs: Jack and 8` (see GAME-FE-002.1-S3). Full House uses "over" (three over pair); Two Pairs uses "and".
+- **Royal Flush output format (settled in GAME-STORY-005, approved by the user):** `Result.reason` is `()` for a Royal Flush. The formatter omits the colon and reason: `<Name> wins. - with royal flush`. See GAME-FE-005.1-S3.
+- **Straight Flush definition (Ch 12).** Any same-suit straight other than 10-J-Q-K-A, including the suited wheel A-2-3-4-5, where the Ace counts as 1 (ADR-006).
+- **Error line format (Ch 8.2, Ch 6.3).** A parser error is printed as `Error: invalid input - <message>.` with a plain hyphen; any other exception as `Error: <message>`.
+- **Wrong-count message (Ch 8.2, Ch 6.3).** `<Player> hand must contain exactly 5 cards, got <N>`, e.g. `Error: invalid input - Black hand must contain exactly 5 cards, got 3.`
+- **Blank lines and exit status (Ch 8.2, Ch 5.3).** Blank or whitespace-only lines are skipped without output. The process exits with status 0 once all input is read, even if some lines produced error lines.
 - **Ten displays as `10`.** Jack, Queen, King, and Ace are spelled out in full. All other ranks display as their integer value.
-- **Ace-low straight follows ADR-006.** The ranker detects `[2, 3, 4, 5, 14]` explicitly and uses tiebreaker key `(5, 4, 3, 2, 1)`.
-
----
-
-## Open Questions
-
-None. Architecture consistency was checked on 2026-11-26 against commit 40873a8:
-
-- `HandCategory` range: Ch 5.3 (05-building-block-view.md line 55) reads "a `HandCategory` (IntEnum, 1-10)" (en dash normalised to a hyphen) and line 58 reads "`ROYAL_FLUSH` is category 10", matching Ch 4.4, Ch 8.1, ADR-003 and ADR-004.
-- Module names: CV-3 (02-constraints.md line 30) reads "`card`, `hand`, `parser`, `ranker`, `comparator`, `formatter`, `cli`", matching Ch 4.3 and Ch 5.3.
+- **Ace-low straight follows ADR-006.** The ranker detects `[2, 3, 4, 5, 14]` explicitly and uses tiebreaker key `(5, 4, 3, 2, 1)`. The suited wheel (A-2-3-4-5 of one suit) is the lowest Straight Flush with the same key (GAME-STORY-005-S6, S7).
 
 ---
 
 ## Pareto Progress
 
-- **Pareto Progress: 1/2 core stories (50% of 20% core stories)**
-  - Calculation: 1 approved story (GAME-STORY-001) / 2 core stories = 50%.
-- **Core functionality coverage: 25.1% of the 94.3% target**
-  - Calculation: GAME-STORY-001 approved = 25.1%. GAME-STORY-002 pending approval would add 69.2%, reaching 94.3%.
+- **Pareto Progress: 2/2 core stories (100% of 20% core stories)**
+  - Calculation: 2 approved stories (GAME-STORY-001, GAME-STORY-002) / 2 core stories = 100%.
+- **Core functionality coverage: 94.3% of the 94.3% target**
+  - Calculation: GAME-STORY-001 (25.1%) + GAME-STORY-002 (69.2%) = 94.3%. Target reached.
+- **All stories: 7/7 approved** (5 GAME, 2 INPUT), none implemented yet.
+  - GAME-STORY-001 to 005 together cover 100% of game outcomes (25.1% + 69.2% + 4.5% + 1.2% + < 0.01%).
 
 ---
 
@@ -161,12 +159,12 @@ None. Architecture consistency was checked on 2026-11-26 against commit 40873a8:
 | Story ID | Title | File | Status |
 |----------|-------|------|--------|
 | GAME-STORY-001 | Decide the winner by high card | `game.md` | Approved |
-| GAME-STORY-002 | Decide the winner with pairs | `game.md` | Bundle written, awaiting approval |
-| GAME-STORY-003 | Sets of equal ranks | `game.md` | Pending |
-| GAME-STORY-004 | Straights and flushes | `game.md` | Pending |
-| GAME-STORY-005 | Straight flushes and royal flush | `game.md` | Pending |
-| INPUT-STORY-001 | Reject malformed input with a clear message | `input.md` | Pending |
-| INPUT-STORY-002 | Keep processing after a bad line | `input.md` | Pending |
+| GAME-STORY-002 | Decide the winner with pairs | `game.md` | Approved |
+| GAME-STORY-003 | Sets of equal ranks | `game.md` | Approved |
+| GAME-STORY-004 | Straights and flushes | `game.md` | Approved |
+| GAME-STORY-005 | Straight flushes and royal flush | `game.md` | Approved |
+| INPUT-STORY-001 | Reject malformed input with a clear message | `input.md` | Approved |
+| INPUT-STORY-002 | Keep processing after a bad line | `input.md` | Approved |
 
 ---
 
@@ -174,7 +172,5 @@ None. Architecture consistency was checked on 2026-11-26 against commit 40873a8:
 
 | Domain file | Stories |
 |-------------|---------|
-| `docs/user-stories/game.md` | GAME-STORY-001, GAME-STORY-002 |
-
-`input.md` does not exist yet. It is created with INPUT-STORY-001. Stories
-GAME-STORY-003 to 005 are added to `game.md` as their bundles are written.
+| `docs/user-stories/game.md` | GAME-STORY-001, GAME-STORY-002, GAME-STORY-003, GAME-STORY-004, GAME-STORY-005 |
+| `docs/user-stories/input.md` | INPUT-STORY-001, INPUT-STORY-002 |
